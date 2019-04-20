@@ -100,6 +100,9 @@ public class InitialWindow {
 					try {
 						List<Bucket> buckets = s3Client.listBuckets();
 						System.out.println(buckets.get(1).getName());
+						Console console = new Console();
+						console.main(null);
+						frmHi.setVisible(false);
 					} catch (Exception e) {
 						JFrame aframe = new JFrame();
 						aframe.setVisible(true);
