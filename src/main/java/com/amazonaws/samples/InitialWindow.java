@@ -31,7 +31,7 @@ public class InitialWindow {
 	private JTextField textField;
 	private JTextField textField_1;
 	public BasicAWSCredentials user_credential = null;
-	public AmazonS3 s3Client = null;
+	public static AmazonS3 s3Client = null;
 	public static String OS_NAME = System.getProperty("os.name");
 
 	/**
