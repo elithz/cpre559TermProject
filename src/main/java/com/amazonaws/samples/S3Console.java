@@ -83,6 +83,30 @@ public class S3Console {
 		JList<String> list = new JList<>(model);
 		list.setBounds(10, 52, 178, 166);
 		frame.getContentPane().add(list);
+		List<Bucket> buckets = InitialWindow.s3Client.listBuckets();
+		model.clear();
+		for (int i = 0; i < buckets.size(); i++) {
+			model.addElement(buckets.get(i).getName());
+		}
+		list.addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent e) {
+				String selected_bucket = list.getSelectedValue();
+				System.out.println(selected_bucket);
+				System.out.println(list.getSelectedIndex());
+				if(list.getSelectedIndex() == -1) {
+					list.setSelectedIndex(0);
+				}else {
+					ListObjectsV2Result result = InitialWindow.s3Client.listObjectsV2(selected_bucket);
+					List<S3ObjectSummary> objects = result.getObjectSummaries();
+					model_1.clear();
+					for (int i = 0; i < objects.size(); i++) {
+						model_1.addElement(objects.get(i).getKey());
+					}
+				}
+				
+			}
+
+		});
 
 		JButton btnNewButton = new JButton("Add");
 		btnNewButton.addActionListener(new ActionListener() {
@@ -90,14 +114,15 @@ public class S3Console {
 				String name = JOptionPane.showInputDialog("What's the name of the new bucket?");
 				try {
 					InitialWindow.s3Client.createBucket(name);
-					List<Bucket> buckets = InitialWindow.s3Client.listBuckets();
-					model.clear();
-					for (int i = 0; i < buckets.size(); i++) {
-						model.addElement(buckets.get(i).getName());
-					}
 				} catch (AmazonS3Exception e1) {
 					System.err.println(e1.getErrorMessage());
 				}
+				List<Bucket> buckets = InitialWindow.s3Client.listBuckets();
+				model.clear();
+				for (int i = 0; i < buckets.size(); i++) {
+					model.addElement(buckets.get(i).getName());
+				}
+				list.setSelectedIndex(0);
 			}
 		});
 		btnNewButton.setBounds(10, 228, 82, 23);
@@ -165,28 +190,16 @@ public class S3Console {
 				for (int i = 0; i < buckets.size(); i++) {
 					model.addElement(buckets.get(i).getName());
 				}
-				
+//				if (list.getSelectedIndex() != -1) {
+//				    model.remove(list.getSelectedIndex());
+//				}
+//				list.setSelectedIndex(0);
 			}
 		});
 		btnDelete.setBounds(102, 228, 82, 23);
 		frame.getContentPane().add(btnDelete);
 
-		List<Bucket> buckets = InitialWindow.s3Client.listBuckets();
-		model.clear();
-		for (int i = 0; i < buckets.size(); i++) {
-			model.addElement(buckets.get(i).getName());
-		}
-//		list.addListSelectionListener(new ListSelectionListener() {
-//			public void valueChanged(ListSelectionEvent e) {
-//				ListObjectsV2Result result = InitialWindow.s3Client.listObjectsV2(list.getSelectedValue());
-//				List<S3ObjectSummary> objects = result.getObjectSummaries();
-//				model_1.clear();
-//				for (int i = 0; i < objects.size(); i++) {
-//					model_1.addElement(objects.get(i).getKey());
-//				}
-//			}
-//
-//		});
+		
 
 	}
 
