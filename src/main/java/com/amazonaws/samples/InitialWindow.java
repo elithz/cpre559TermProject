@@ -4,19 +4,27 @@ import java.awt.EventQueue;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+
 import java.awt.BorderLayout;
+
+import javax.swing.Action;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.awt.event.ActionEvent;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
+import javax.swing.text.DefaultEditorKit;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
@@ -24,6 +32,10 @@ import com.amazonaws.services.s3.model.Bucket;
 import java.awt.Font;
 import javax.swing.JList;
 import java.awt.Choice;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.text.*;
 
 public class InitialWindow {
 
@@ -32,6 +44,7 @@ public class InitialWindow {
 	private JTextField textField_1;
 	public BasicAWSCredentials user_credential = null;
 	public static AmazonS3 s3Client = null;
+	public static AmazonEC2 ec2Client = null;
 	public static String OS_NAME = System.getProperty("os.name");
 
 	/**
@@ -62,9 +75,25 @@ public class InitialWindow {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
+		JPopupMenu menu = new JPopupMenu();
+        Action cut = new DefaultEditorKit.CutAction();
+        cut.putValue(Action.NAME, "Cut");
+        cut.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke("control X"));
+        menu.add( cut );
+
+        Action copy = new DefaultEditorKit.CopyAction();
+        copy.putValue(Action.NAME, "Copy");
+        copy.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke("control C"));
+        menu.add( copy );
+
+        Action paste = new DefaultEditorKit.PasteAction();
+        paste.putValue(Action.NAME, "Paste");
+        paste.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke("control V"));
+        menu.add( paste );
+        
 		frmHi = new JFrame();
 		frmHi.setTitle("AWS Simple GUI Tool");
-		frmHi.setBounds(100, 100, 450, 300);
+		frmHi.setBounds(100, 100, 553, 361);
 		frmHi.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		JPanel panel = new JPanel();
@@ -72,17 +101,19 @@ public class InitialWindow {
 		panel.setLayout(null);
 
 		textField = new JTextField();
-		textField.setBounds(182, 82, 66, 21);
+		textField.setBounds(182, 82, 154, 21);
 		panel.add(textField);
 		textField.setColumns(10);
+		textField.setComponentPopupMenu( menu );
 
 		textField_1 = new JTextField();
 		textField_1.setColumns(10);
-		textField_1.setBounds(182, 51, 66, 21);
+		textField_1.setBounds(182, 51, 154, 21);
 		panel.add(textField_1);
+		textField_1.setComponentPopupMenu( menu );
 		
 		Choice choice = new Choice();
-		choice.setBounds(182, 124, 66, 21);
+		choice.setBounds(182, 124, 113, 21);
 		choice.addItem("us-east-1");
 		choice.addItem("us-east-2");
 		choice.addItem("us-west-1");
@@ -96,6 +127,8 @@ public class InitialWindow {
 				user_credential = new BasicAWSCredentials(textField_1.getText(), textField.getText());
 				try {
 					s3Client = AmazonS3ClientBuilder.standard().withRegion(choice.getSelectedItem())
+							.withCredentials(new AWSStaticCredentialsProvider(user_credential)).build();
+					ec2Client = AmazonEC2ClientBuilder.standard().withRegion(choice.getSelectedItem())
 							.withCredentials(new AWSStaticCredentialsProvider(user_credential)).build();
 					try {
 						List<Bucket> buckets = s3Client.listBuckets();
@@ -117,25 +150,30 @@ public class InitialWindow {
 				}
 			}
 		});
-		btnNewButton.setBounds(171, 203, 93, 23);
+		btnNewButton.setBounds(182, 164, 93, 23);
 		panel.add(btnNewButton);
 
 		JLabel lblWelcomeToAws = new JLabel("Welcome to AWS Simple GUI Tool");
 		lblWelcomeToAws.setFont(new Font("SimSun", Font.PLAIN, 14));
 		lblWelcomeToAws.setHorizontalAlignment(SwingConstants.CENTER);
-		lblWelcomeToAws.setBounds(99, 10, 238, 31);
+		lblWelcomeToAws.setBounds(98, 10, 238, 31);
 		panel.add(lblWelcomeToAws);
 
 		JLabel lblIamAccessKey = new JLabel("IAM Access Key");
-		lblIamAccessKey.setBounds(40, 54, 84, 15);
+		lblIamAccessKey.setBounds(20, 54, 146, 15);
 		panel.add(lblIamAccessKey);
 
 		JLabel lblIamSecretAccess = new JLabel("IAM Secret Access Key");
-		lblIamSecretAccess.setBounds(26, 85, 146, 15);
+		lblIamSecretAccess.setBounds(20, 85, 146, 15);
 		panel.add(lblIamSecretAccess);
 		
 		JLabel lblRegion = new JLabel("Region");
 		lblRegion.setBounds(54, 124, 54, 15);
 		panel.add(lblRegion);
+		
+		
+
+        
+		
 	}
 }

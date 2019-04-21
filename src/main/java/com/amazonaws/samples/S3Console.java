@@ -93,9 +93,9 @@ public class S3Console {
 				String selected_bucket = list.getSelectedValue();
 				System.out.println(selected_bucket);
 				System.out.println(list.getSelectedIndex());
-				if(list.getSelectedIndex() == -1) {
+				if (list.getSelectedIndex() == -1) {
 					list.setSelectedIndex(0);
-				}else {
+				} else {
 					ListObjectsV2Result result = InitialWindow.s3Client.listObjectsV2(selected_bucket);
 					List<S3ObjectSummary> objects = result.getObjectSummaries();
 					model_1.clear();
@@ -103,7 +103,7 @@ public class S3Console {
 						model_1.addElement(objects.get(i).getKey());
 					}
 				}
-				
+
 			}
 
 		});
@@ -127,79 +127,70 @@ public class S3Console {
 		});
 		btnNewButton.setBounds(10, 228, 82, 23);
 		frame.getContentPane().add(btnNewButton);
-		
+
 		JButton btnDelete = new JButton("Delete");
 		btnDelete.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String name_to_remove = list.getSelectedValue();
 				System.out.println(name_to_remove);
-				
+
 				try {
-				    System.out.println(" - removing objects from bucket");
-				    ObjectListing object_listing = InitialWindow.s3Client.listObjects(name_to_remove);
-				    while (true) {
-				        for (Iterator<?> iterator =
-				                object_listing.getObjectSummaries().iterator();
-				                iterator.hasNext();) {
-				            S3ObjectSummary summary = (S3ObjectSummary)iterator.next();
-				            InitialWindow.s3Client.deleteObject(name_to_remove, summary.getKey());
-				        }
+					System.out.println(" - removing objects from bucket");
+					ObjectListing object_listing = InitialWindow.s3Client.listObjects(name_to_remove);
+					while (true) {
+						for (Iterator<?> iterator = object_listing.getObjectSummaries().iterator(); iterator
+								.hasNext();) {
+							S3ObjectSummary summary = (S3ObjectSummary) iterator.next();
+							InitialWindow.s3Client.deleteObject(name_to_remove, summary.getKey());
+						}
 
-				        // more object_listing to retrieve?
-				        if (object_listing.isTruncated()) {
-				            object_listing = InitialWindow.s3Client.listNextBatchOfObjects(object_listing);
-				        } else {
-				            break;
-				        }
-				    };
+						// more object_listing to retrieve?
+						if (object_listing.isTruncated()) {
+							object_listing = InitialWindow.s3Client.listNextBatchOfObjects(object_listing);
+						} else {
+							break;
+						}
+					}
+					;
 
-				    System.out.println(" - removing versions from bucket");
-				    VersionListing version_listing = InitialWindow.s3Client.listVersions(
-				            new ListVersionsRequest().withBucketName(name_to_remove));
-				    while (true) {
-				        for (Iterator<?> iterator =
-				                version_listing.getVersionSummaries().iterator();
-				                iterator.hasNext();) {
-				            S3VersionSummary vs = (S3VersionSummary)iterator.next();
-				            InitialWindow.s3Client.deleteVersion(
-				            		name_to_remove, vs.getKey(), vs.getVersionId());
-				        }
+					System.out.println(" - removing versions from bucket");
+					VersionListing version_listing = InitialWindow.s3Client
+							.listVersions(new ListVersionsRequest().withBucketName(name_to_remove));
+					while (true) {
+						for (Iterator<?> iterator = version_listing.getVersionSummaries().iterator(); iterator
+								.hasNext();) {
+							S3VersionSummary vs = (S3VersionSummary) iterator.next();
+							InitialWindow.s3Client.deleteVersion(name_to_remove, vs.getKey(), vs.getVersionId());
+						}
 
-				        if (version_listing.isTruncated()) {
-				            version_listing = InitialWindow.s3Client.listNextBatchOfVersions(
-				                    version_listing);
-				        } else {
-				            break;
-				        }
-				    }
+						if (version_listing.isTruncated()) {
+							version_listing = InitialWindow.s3Client.listNextBatchOfVersions(version_listing);
+						} else {
+							break;
+						}
+					}
 				} catch (AmazonServiceException e1) {
-				    System.err.println(e1.getErrorMessage());
-				    System.exit(1);
+					System.err.println(e1.getErrorMessage());
+					System.exit(1);
 				}
-				
+
 				try {
 					InitialWindow.s3Client.deleteBucket(name_to_remove);
-					 System.out.println("bucket removed");
+					System.out.println("bucket removed");
 				} catch (AmazonServiceException e1) {
-				    System.err.println(e1.getErrorMessage());
-				    System.exit(1);
+					System.err.println(e1.getErrorMessage());
+					System.exit(1);
 				}
-				
+
 				List<Bucket> buckets = InitialWindow.s3Client.listBuckets();
 				model.clear();
 				for (int i = 0; i < buckets.size(); i++) {
 					model.addElement(buckets.get(i).getName());
 				}
-//				if (list.getSelectedIndex() != -1) {
-//				    model.remove(list.getSelectedIndex());
-//				}
-//				list.setSelectedIndex(0);
 			}
 		});
 		btnDelete.setBounds(102, 228, 82, 23);
 		frame.getContentPane().add(btnDelete);
-
-		
 
 	}
 
