@@ -286,6 +286,14 @@ public class S3Console {
 		});
 		button.setBounds(328, 97, 93, 23);
 		frame.getContentPane().add(button);
+		
+		JButton btnDelete_1 = new JButton("Delete");
+		btnDelete_1.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			}
+		});
+		btnDelete_1.setBounds(328, 141, 93, 23);
+		frame.getContentPane().add(btnDelete_1);
 
 	}
 
