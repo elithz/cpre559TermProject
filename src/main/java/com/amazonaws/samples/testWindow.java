@@ -1,77 +1,49 @@
 package com.amazonaws.samples;
 
-import java.awt.EventQueue;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import java.awt.BorderLayout;
-import javax.swing.JButton;
-import java.awt.FlowLayout;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-import java.io.IOException;
-
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.SdkClientException;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.amazonaws.services.s3.model.GetBucketLocationRequest;
-
-
-public class testWindow {
-
-	private JFrame frmHi;
-
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					testWindow window = new testWindow();
-					window.frmHi.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
-
-	/**
-	 * Create the application.
-	 */
-	public testWindow() {
-		initialize();
-	}
-
-	/**
-	 * Initialize the contents of the frame.
-	 */
-	private void initialize() {
-		frmHi = new JFrame();
-		frmHi.setTitle("Hi");
-		frmHi.setBounds(100, 100, 450, 300);
-		frmHi.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
-		JPanel panel = new JPanel();
-		frmHi.getContentPane().add(panel, BorderLayout.CENTER);
-		panel.setLayout(null);
-		
-		JButton btnNewButton = new JButton("click me!");
-		btnNewButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				JFrame aframe = new JFrame();
-				aframe.setVisible(true);
-				aframe.setName("a test window");
-				aframe.setTitle("Hi");
-				aframe.setBounds(100, 100, 450, 300);
-				aframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			}
-		});
-		btnNewButton.setBounds(10, 10, 93, 23);
-		panel.add(btnNewButton);
-	}
-}
+import javax.swing.JFrame; 
+import javax.swing.JScrollPane; 
+import javax.swing.JTable; 
+  
+public class testWindow { 
+    // frame 
+    JFrame f; 
+    // Table 
+    JTable j; 
+  
+    // Constructor 
+    testWindow() 
+    { 
+        // Frame initiallization 
+        f = new JFrame(); 
+  
+        // Frame Title 
+        f.setTitle("JTable Example"); 
+  
+        // Data to be displayed in the JTable 
+        String[][] data = { 
+            { "Kundan Kumar Jha", "4031", "CSE" }, 
+            { "Anand Jha", "6014", "IT" } 
+        }; 
+  
+        // Column Names 
+        String[] columnNames = { "Name", "Roll Number", "Department" }; 
+  
+        // Initializing the JTable 
+        j = new JTable(data, columnNames); 
+        j.setBounds(30, 40, 200, 300); 
+  
+        // adding it to JScrollPane 
+        JScrollPane sp = new JScrollPane(j); 
+        f.add(sp); 
+        // Frame Size 
+        f.setSize(500, 200); 
+        // Frame Visible = true 
+        f.setVisible(true); 
+    } 
+  
+    // Driver  method 
+    public static void main(String[] args) 
+    { 
+        new testWindow(); 
+    } 
+} 
