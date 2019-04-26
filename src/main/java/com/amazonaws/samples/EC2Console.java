@@ -27,6 +27,7 @@ import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.mediastoredata.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
@@ -131,17 +132,20 @@ public class EC2Console {
 		btnReboot.setBounds(446, 181, 93, 23);
 		frame.getContentPane().add(btnReboot);
 
-		String[][] data = { { "Kundan Kumar Jha", "4031"}, { "Anand Jha", "6014"} };
+		DefaultTableModel m = new DefaultTableModel();
+		JTable table = new JTable(m);
 
-		// Column Names
-		String[] columnNames = { "Name", "Roll Number"};
-		JTable j = new JTable(data, columnNames);
-		j.setBounds(30, 40, 200, 300);
-		JScrollPane scrollPane = new JScrollPane(j);
+		// Create a couple of columns
+		m.addColumn("Property");
+		m.addColumn("Value");
+
+		// Append a row
+		// m.addRow(new Object[]{"Property", "Value"});
+		table.setBounds(30, 40, 200, 300);
+		JScrollPane scrollPane = new JScrollPane(table);
 		scrollPane.setBounds(176, 52, 260, 260);
 		frame.getContentPane().add(scrollPane);
 
-//		List<Bucket> buckets = InitialWindow.s3Client.listBuckets();
 		boolean done = false;
 		DescribeInstancesRequest request = new DescribeInstancesRequest();
 		List<Instance> insts = new ArrayList<Instance>();
@@ -166,6 +170,49 @@ public class EC2Console {
 		model.clear();
 		for (int i = 0; i < insts.size(); i++)
 			model.addElement(insts.get(i).getInstanceId());
+		list.addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent e) {
+//				String selected_bucket = list.getSelectedValue();
+//				System.out.println(selected_bucket);
+//				System.out.println(list.getSelectedIndex());
+//				if (list.getSelectedIndex() == -1)
+//					list.setSelectedIndex(0);
+//				else {
+//					ListObjectsV2Result result = InitialWindow.s3Client.listObjectsV2(selected_bucket);
+//					List<S3ObjectSummary> objects = result.getObjectSummaries();
+//					model_1.clear();
+//					for (int i = 0; i < objects.size(); i++)
+//						model_1.addElement(objects.get(i).getKey());
+//				}
+				String selected_instance = list.getSelectedValue();
+				System.out.println(selected_instance);
+				if (list.getSelectedIndex() == -1)
+					list.setSelectedIndex(0);
+				else {
+					Instance temp = null;
+					for (int i = 0; i < insts.size(); i++)
+						if (insts.get(i).getInstanceId().equals(list.getSelectedValue()))
+							temp = insts.get(i);
+					System.out.printf(
+							"Found instance with id %s, " + "AMI %s, " + "type %s, " + "state %s "
+									+ "and monitoring state %s" + "\n",
+							temp.getInstanceId(), temp.getImageId(), temp.getInstanceType(), temp.getState().getName(),
+							temp.getMonitoring().getState());
+					for(int i = 0; i < m.getRowCount(); i++)
+						m.removeRow(i);
+					String instNam = "";
+					for(Tag tag : temp.getTags())
+						if(tag.getKey().equals("Name"))
+							instNam = tag.getValue();
+					m.addRow(new Object[] {"Name", instNam});
+					m.addRow(new Object[] {"AIM", temp.getImageId()});
+					m.addRow(new Object[] {"Type", temp.getInstanceType()});
+					m.addRow(new Object[] {"State", temp.getState().getName()});
+					m.addRow(new Object[] {"Monit State", temp.getMonitoring().getState()});
+				}
+				
+			}
+		});
 
 	}
 
