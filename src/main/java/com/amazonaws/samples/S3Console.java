@@ -22,6 +22,7 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.mediastoredata.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
@@ -102,19 +103,16 @@ public class S3Console {
 				String selected_bucket = list.getSelectedValue();
 				System.out.println(selected_bucket);
 				System.out.println(list.getSelectedIndex());
-				if (list.getSelectedIndex() == -1) {
+				if (list.getSelectedIndex() == -1)
 					list.setSelectedIndex(0);
-				} else {
+				else {
 					ListObjectsV2Result result = InitialWindow.s3Client.listObjectsV2(selected_bucket);
 					List<S3ObjectSummary> objects = result.getObjectSummaries();
 					model_1.clear();
-					for (int i = 0; i < objects.size(); i++) {
+					for (int i = 0; i < objects.size(); i++)
 						model_1.addElement(objects.get(i).getKey());
-					}
 				}
-
 			}
-
 		});
 
 		JButton btnNewButton = new JButton("Add");
@@ -128,9 +126,8 @@ public class S3Console {
 				}
 				List<Bucket> buckets = InitialWindow.s3Client.listBuckets();
 				model.clear();
-				for (int i = 0; i < buckets.size(); i++) {
+				for (int i = 0; i < buckets.size(); i++)
 					model.addElement(buckets.get(i).getName());
-				}
 				list.setSelectedIndex(0);
 			}
 		});
@@ -154,13 +151,11 @@ public class S3Console {
 						}
 
 						// more object_listing to retrieve?
-						if (object_listing.isTruncated()) {
+						if (object_listing.isTruncated())
 							object_listing = InitialWindow.s3Client.listNextBatchOfObjects(object_listing);
-						} else {
+						else
 							break;
-						}
 					}
-					;
 
 					System.out.println(" - removing versions from bucket");
 					VersionListing version_listing = InitialWindow.s3Client
@@ -172,11 +167,10 @@ public class S3Console {
 							InitialWindow.s3Client.deleteVersion(name_to_remove, vs.getKey(), vs.getVersionId());
 						}
 
-						if (version_listing.isTruncated()) {
+						if (version_listing.isTruncated())
 							version_listing = InitialWindow.s3Client.listNextBatchOfVersions(version_listing);
-						} else {
+						else
 							break;
-						}
 					}
 				} catch (AmazonServiceException e1) {
 					System.err.println(e1.getErrorMessage());
@@ -193,9 +187,8 @@ public class S3Console {
 
 				List<Bucket> buckets = InitialWindow.s3Client.listBuckets();
 				model.clear();
-				for (int i = 0; i < buckets.size(); i++) {
+				for (int i = 0; i < buckets.size(); i++)
 					model.addElement(buckets.get(i).getName());
-				}
 			}
 		});
 		btnDelete.setBounds(102, 228, 82, 23);
@@ -211,9 +204,9 @@ public class S3Console {
 				if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 					selectedFile = chooser.getSelectedFile();
 					try {
-						System.out.println("Uploading" + selectedFile.getName() + "\n");
+						System.out.println("Uploading " + selectedFile.getName() + "\n");
 						InitialWindow.s3Client.putObject(target_bucket, selectedFile.getName(), selectedFile);
-						System.out.println("Download finished");
+						System.out.println("Upload finished");
 					} catch (AmazonServiceException ase) {
 						System.out.println("Caught an AmazonServiceException, which means your request made it "
 								+ "to Amazon S3, but was rejected with an error response for some reason.");
@@ -231,9 +224,8 @@ public class S3Console {
 					ListObjectsV2Result result = InitialWindow.s3Client.listObjectsV2(target_bucket);
 					List<S3ObjectSummary> objects = result.getObjectSummaries();
 					model_1.clear();
-					for (int i = 0; i < objects.size(); i++) {
+					for (int i = 0; i < objects.size(); i++)
 						model_1.addElement(objects.get(i).getKey());
-					}
 				} else
 					System.out.println("user canceled upload");
 			}
@@ -247,49 +239,72 @@ public class S3Console {
 				String target_file = list_1.getSelectedValue();
 				String target_bucket = list.getSelectedValue();
 				String save_path = null;
-				JFileChooser chooser = new JFileChooser();
-				chooser.setCurrentDirectory(new java.io.File("."));
-				chooser.setDialogTitle("Choose the directory you want to save the file");
-				chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-				chooser.setAcceptAllFileFilterUsed(false);
-				if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-					save_path = chooser.getSelectedFile().getAbsolutePath();
-					System.out.println(chooser.getSelectedFile().getAbsolutePath());
-					System.out.println(chooser.getSelectedFile());
-					System.out.println(chooser.getCurrentDirectory());
-					try {
-						S3Object o = InitialWindow.s3Client.getObject(target_bucket, target_file);
-						S3ObjectInputStream s3is = o.getObjectContent();
-						FileOutputStream fos = new FileOutputStream(new File(save_path + File.separator + target_file));
-						byte[] read_buf = new byte[1024];
-						int read_len = 0;
-						while ((read_len = s3is.read(read_buf)) > 0) {
-							fos.write(read_buf, 0, read_len);
+				if (target_file != null) {
+					JFileChooser chooser = new JFileChooser();
+					chooser.setCurrentDirectory(new java.io.File("."));
+					chooser.setDialogTitle("Choose the directory you want to save the file");
+					chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+					chooser.setAcceptAllFileFilterUsed(false);
+					if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+						save_path = chooser.getSelectedFile().getAbsolutePath();
+						System.out.println(chooser.getSelectedFile().getAbsolutePath());
+						System.out.println(chooser.getSelectedFile());
+						System.out.println(chooser.getCurrentDirectory());
+						try {
+							S3Object o = InitialWindow.s3Client.getObject(target_bucket, target_file);
+							S3ObjectInputStream s3is = o.getObjectContent();
+							FileOutputStream fos = new FileOutputStream(
+									new File(save_path + File.separator + target_file));
+							byte[] read_buf = new byte[1024];
+							int read_len = 0;
+							while ((read_len = s3is.read(read_buf)) > 0) {
+								fos.write(read_buf, 0, read_len);
+							}
+							System.out.println("Download finished");
+							s3is.close();
+							fos.close();
+						} catch (AmazonServiceException e1) {
+							System.err.println(e1.getErrorMessage());
+							System.exit(1);
+						} catch (FileNotFoundException e1) {
+							System.err.println(e1.getMessage());
+							System.exit(1);
+						} catch (IOException e1) {
+							System.err.println(e1.getMessage());
+							System.exit(1);
 						}
-						System.out.println("Download finished");
-						s3is.close();
-						fos.close();
-					} catch (AmazonServiceException e1) {
-						System.err.println(e1.getErrorMessage());
-						System.exit(1);
-					} catch (FileNotFoundException e1) {
-						System.err.println(e1.getMessage());
-						System.exit(1);
-					} catch (IOException e1) {
-						System.err.println(e1.getMessage());
-						System.exit(1);
-					}
+					} else
+						System.out.println("user canceled download");
 				} else
-					System.out.println("user canceled download");
+					System.out.println("no object to download");
 
 			}
 		});
 		button.setBounds(328, 97, 93, 23);
 		frame.getContentPane().add(button);
-		
+
 		JButton btnDelete_1 = new JButton("Delete");
 		btnDelete_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				String target_file = list_1.getSelectedValue();
+				String target_bucket = list.getSelectedValue();
+				if (target_file != null) {
+					try {
+						DeleteObjectsRequest dor = new DeleteObjectsRequest(target_bucket).withKeys(target_file);
+						InitialWindow.s3Client.deleteObjects(dor);
+						System.out.println("delete complete");
+					} catch (AmazonServiceException e1) {
+						System.err.println(e1.getErrorMessage());
+						System.exit(1);
+					}
+					ListObjectsV2Result result = InitialWindow.s3Client.listObjectsV2(target_bucket);
+					List<S3ObjectSummary> objects = result.getObjectSummaries();
+					model_1.clear();
+					for (int i = 0; i < objects.size(); i++)
+						model_1.addElement(objects.get(i).getKey());
+				}else
+					System.out.println("no object to delete");
+
 			}
 		});
 		btnDelete_1.setBounds(328, 141, 93, 23);
