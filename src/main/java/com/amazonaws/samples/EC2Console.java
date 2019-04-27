@@ -24,15 +24,26 @@ import javax.swing.table.TableModel;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
+import com.amazonaws.services.ec2.model.DescribeImagesResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.DescribeKeyPairsResult;
+import com.amazonaws.services.ec2.model.DescribeRegionsResult;
+import com.amazonaws.services.ec2.model.DescribeSecurityGroupsResult;
+import com.amazonaws.services.ec2.model.Image;
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.InstanceStateChange;
+import com.amazonaws.services.ec2.model.InstanceType;
 import com.amazonaws.services.ec2.model.KeyPairInfo;
+import com.amazonaws.services.ec2.model.Region;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
+import com.amazonaws.services.ec2.model.SecurityGroup;
+import com.amazonaws.services.ec2.model.StartInstancesRequest;
 import com.amazonaws.services.ec2.model.Tag;
+import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
+import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.amazonaws.services.mediastoredata.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
@@ -124,29 +135,52 @@ public class EC2Console {
 		JButton btnLauch = new JButton("Lauch New");
 		btnLauch.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				DescribeKeyPairsResult rsps = InitialWindow.ec2Client.describeKeyPairs();
+				DescribeKeyPairsResult rsps_kp = InitialWindow.ec2Client.describeKeyPairs();
 				List<String> kp_name = new ArrayList<String>();
-				for(KeyPairInfo key_pair : rsps.getKeyPairs()) {
-				    System.out.printf(
-				        "Found key pair with name %s " +
-				        "and fingerprint %s",
-				        key_pair.getKeyName(),
-				        key_pair.getKeyFingerprint());
-				    kp_name.add(key_pair.getKeyName());
+				for (KeyPairInfo key_pair : rsps_kp.getKeyPairs()) {
+					System.out.printf("Found key pair with name %s " + "and fingerprint %s", key_pair.getKeyName(),
+							key_pair.getKeyFingerprint() + "\n");
+					kp_name.add(key_pair.getKeyName());
 				}
-				
+
+				List<String> it_name = new ArrayList<String>();
+				for (InstanceType it : InstanceType.values())
+					it_name.add(it.toString());
+
+				DescribeSecurityGroupsResult rsps_sg = InitialWindow.ec2Client.describeSecurityGroups();
+				List<String> sg_name = new ArrayList<String>();
+				for (SecurityGroup security_group : rsps_sg.getSecurityGroups()) {
+					System.out.printf("Found security group with name %s ", security_group.getDescription() + "\n");
+					sg_name.add(security_group.getGroupName());
+				}
+
+//				DescribeImagesResult rsps_ii = InitialWindow.ec2Client.describeImages();
+//				List<String> ii_id = new ArrayList<String>();
+//				for (Image image_id : rsps_ii.getImages()) {
+//					System.out.printf("Found image with id %s ", image_id.getDescription() + "\n");
+//					ii_id.add(image_id.getImageId());
+//				}
+
 				try {
+					DescribeRegionsResult drr = InitialWindow.ec2Client.describeRegions();
+					for (Region r : drr.getRegions())
+						System.out.println(r.getRegionName());
+//					InitialWindow.ec2Client.zon
 					String image_id = null;
 					String instance_type = null;
 					String key_pair = null;
 					String security_group = null;
-					System.out.println("Creating ec2 client");
+					System.out.println("Creating ec2 instance");
 					JTextField imageId = new JTextField();
-					JTextField instanceType = new JTextField();
+					Choice instanceType = new Choice();
+					for (String itname : it_name)
+						instanceType.add(itname);
 					Choice keyPair = new Choice();
-					for(String keypair : kp_name)
+					for (String keypair : kp_name)
 						keyPair.add(keypair);
-					JTextField securityGroup = new JTextField();
+					Choice securityGroup = new Choice();
+					for (String securitygroup : sg_name)
+						securityGroup.add(securitygroup);
 					Object[] message = { "imageId:", imageId, "instanceType:", instanceType, "keyPair:", keyPair,
 							"securityGroup", securityGroup };
 
@@ -154,19 +188,22 @@ public class EC2Console {
 							JOptionPane.OK_CANCEL_OPTION);
 					if (option == JOptionPane.OK_OPTION) {
 						image_id = imageId.getText();
-						instance_type = instanceType.getText();
+						instance_type = instanceType.getSelectedItem();
 						key_pair = keyPair.getSelectedItem();
-						security_group = securityGroup.getText();
+						security_group = securityGroup.getSelectedItem();
 					} else {
-						System.out.println("Login canceled");
+						System.out.println("InstanceCreation canceled");
 					}
-					if(image_id != null && instance_type != null && key_pair != null && security_group != null) {
+					if (image_id != null && instance_type != null && key_pair != null && security_group != null) {
+						System.out
+								.println(image_id + " " + instance_type + " " + key_pair + " " + security_group + "--");
 						RunInstancesRequest runInstancesRequest = new RunInstancesRequest().withImageId(image_id)
 								.withInstanceType(instance_type).withMinCount(1).withMaxCount(1).withKeyName(key_pair)
 								.withSecurityGroups(security_group);
 						RunInstancesResult result = InitialWindow.ec2Client.runInstances(runInstancesRequest);
 					}
 				} catch (AmazonS3Exception e1) {
+					JOptionPane.showMessageDialog(null, "e1.getErrorMessage()");
 					System.err.println(e1.getErrorMessage());
 				}
 
@@ -200,6 +237,44 @@ public class EC2Console {
 		frame.getContentPane().add(btnLauch);
 
 		JButton btnTerminate = new JButton("Terminate");
+		btnTerminate.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String selected_instance = list.getSelectedValue();
+				System.out.println(selected_instance);
+				Instance temp = null;
+				for (int i = 0; i < insts.size(); i++)
+					if (insts.get(i).getInstanceId().equals(list.getSelectedValue()))
+						temp = insts.get(i);
+				System.out.printf(
+						"Found instance with id %s, " + "AMI %s, " + "type %s, " + "state %s "
+								+ "and monitoring state %s" + "\n",
+						temp.getInstanceId(), temp.getImageId(), temp.getInstanceType(), temp.getState().getName(),
+						temp.getMonitoring().getState());
+				TerminateInstancesRequest tir = new TerminateInstancesRequest().withInstanceIds(temp.getInstanceId());
+				TerminateInstancesResult tirst = InitialWindow.ec2Client.terminateInstances(tir);
+				for (InstanceStateChange isc : tirst.getTerminatingInstances())
+					System.out.println("Terminated: " + isc.getInstanceId() + ". Previous: "
+							+ isc.getPreviousState().getName() + ". Now: " + isc.getCurrentState().getName());
+
+				boolean done = false;
+				DescribeInstancesRequest request = new DescribeInstancesRequest();
+				insts.clear();
+				while (!done) {
+					DescribeInstancesResult response = InitialWindow.ec2Client.describeInstances(request);
+					for (Reservation reservation : response.getReservations())
+						for (Instance instance : reservation.getInstances()) 
+							insts.add(instance);
+					
+					request.setNextToken(response.getNextToken());
+					if (response.getNextToken() == null)
+						done = true;
+				}
+				model.clear();
+				for (int i = 0; i < insts.size(); i++)
+					model.addElement(insts.get(i).getInstanceId());
+				list.setSelectedIndex(0);
+			}
+		});
 		btnTerminate.setBounds(446, 82, 93, 23);
 		frame.getContentPane().add(btnTerminate);
 
@@ -208,6 +283,42 @@ public class EC2Console {
 		frame.getContentPane().add(btnStop);
 
 		JButton btnRun = new JButton("Run");
+		btnRun.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String selected_instance = list.getSelectedValue();
+				System.out.println(selected_instance);
+				Instance temp = null;
+				for (int i = 0; i < insts.size(); i++)
+					if (insts.get(i).getInstanceId().equals(list.getSelectedValue()))
+						temp = insts.get(i);
+				System.out.printf(
+						"Found instance with id %s, " + "AMI %s, " + "type %s, " + "state %s "
+								+ "and monitoring state %s" + "\n",
+						temp.getInstanceId(), temp.getImageId(), temp.getInstanceType(), temp.getState().getName(),
+						temp.getMonitoring().getState());
+				StartInstancesRequest start_request = new StartInstancesRequest().withInstanceIds(temp.getInstanceId());
+
+				InitialWindow.ec2Client.startInstances(start_request);
+				
+				boolean done = false;
+				DescribeInstancesRequest request = new DescribeInstancesRequest();
+				insts.clear();
+				while (!done) {
+					DescribeInstancesResult response = InitialWindow.ec2Client.describeInstances(request);
+					for (Reservation reservation : response.getReservations())
+						for (Instance instance : reservation.getInstances()) 
+							insts.add(instance);
+
+					request.setNextToken(response.getNextToken());
+					if (response.getNextToken() == null)
+						done = true;
+				}
+				model.clear();
+				for (int i = 0; i < insts.size(); i++)
+					model.addElement(insts.get(i).getInstanceId());
+				list.setSelectedIndex(0);
+			}
+		});
 		btnRun.setBounds(446, 115, 93, 23);
 		frame.getContentPane().add(btnRun);
 
