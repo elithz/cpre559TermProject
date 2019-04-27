@@ -198,8 +198,9 @@ public class EC2Console {
 									+ "and monitoring state %s" + "\n",
 							temp.getInstanceId(), temp.getImageId(), temp.getInstanceType(), temp.getState().getName(),
 							temp.getMonitoring().getState());
-					for(int i = 0; i < m.getRowCount(); i++)
-						m.removeRow(i);
+//					for(int i = 0; i < m.getRowCount(); i++)
+//						m.removeRow(i);
+					m.setRowCount(0);
 					String instNam = "";
 					for(Tag tag : temp.getTags())
 						if(tag.getKey().equals("Name"))
