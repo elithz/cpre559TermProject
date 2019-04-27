@@ -15,6 +15,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.JPasswordField;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
@@ -25,8 +26,12 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
+import com.amazonaws.services.ec2.model.DescribeKeyPairsResult;
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.KeyPairInfo;
 import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.RunInstancesRequest;
+import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.mediastoredata.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
@@ -48,8 +53,11 @@ import javax.swing.JFileChooser;
 import javax.swing.JSeparator;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.LineBorder;
+
+import java.awt.Choice;
 import java.awt.Color;
 import java.awt.Component;
 
@@ -63,6 +71,7 @@ public class EC2Console {
 	private JFrame frame;
 	public DefaultListModel<String> model;
 	public DefaultListModel<String> model_1;
+	public List<Instance> insts = new ArrayList<Instance>();
 
 	/**
 	 * Launch the application.
@@ -113,6 +122,80 @@ public class EC2Console {
 		frame.getContentPane().add(list);
 
 		JButton btnLauch = new JButton("Lauch New");
+		btnLauch.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				DescribeKeyPairsResult rsps = InitialWindow.ec2Client.describeKeyPairs();
+				List<String> kp_name = new ArrayList<String>();
+				for(KeyPairInfo key_pair : rsps.getKeyPairs()) {
+				    System.out.printf(
+				        "Found key pair with name %s " +
+				        "and fingerprint %s",
+				        key_pair.getKeyName(),
+				        key_pair.getKeyFingerprint());
+				    kp_name.add(key_pair.getKeyName());
+				}
+				
+				try {
+					String image_id = null;
+					String instance_type = null;
+					String key_pair = null;
+					String security_group = null;
+					System.out.println("Creating ec2 client");
+					JTextField imageId = new JTextField();
+					JTextField instanceType = new JTextField();
+					Choice keyPair = new Choice();
+					for(String keypair : kp_name)
+						keyPair.add(keypair);
+					JTextField securityGroup = new JTextField();
+					Object[] message = { "imageId:", imageId, "instanceType:", instanceType, "keyPair:", keyPair,
+							"securityGroup", securityGroup };
+
+					int option = JOptionPane.showConfirmDialog(null, message, "Creat Instance",
+							JOptionPane.OK_CANCEL_OPTION);
+					if (option == JOptionPane.OK_OPTION) {
+						image_id = imageId.getText();
+						instance_type = instanceType.getText();
+						key_pair = keyPair.getSelectedItem();
+						security_group = securityGroup.getText();
+					} else {
+						System.out.println("Login canceled");
+					}
+					if(image_id != null && instance_type != null && key_pair != null && security_group != null) {
+						RunInstancesRequest runInstancesRequest = new RunInstancesRequest().withImageId(image_id)
+								.withInstanceType(instance_type).withMinCount(1).withMaxCount(1).withKeyName(key_pair)
+								.withSecurityGroups(security_group);
+						RunInstancesResult result = InitialWindow.ec2Client.runInstances(runInstancesRequest);
+					}
+				} catch (AmazonS3Exception e1) {
+					System.err.println(e1.getErrorMessage());
+				}
+
+				boolean done = false;
+				DescribeInstancesRequest request = new DescribeInstancesRequest();
+				insts.clear();
+				while (!done) {
+					DescribeInstancesResult response = InitialWindow.ec2Client.describeInstances(request);
+					for (Reservation reservation : response.getReservations())
+						for (Instance instance : reservation.getInstances()) {
+							System.out.printf(
+									"Found instance with id %s, " + "AMI %s, " + "type %s, " + "state %s "
+											+ "and monitoring state %s" + "\n",
+									instance.getInstanceId(), instance.getImageId(), instance.getInstanceType(),
+									instance.getState().getName(), instance.getMonitoring().getState());
+							insts.add(instance);
+
+						}
+
+					request.setNextToken(response.getNextToken());
+					if (response.getNextToken() == null)
+						done = true;
+				}
+				model.clear();
+				for (int i = 0; i < insts.size(); i++)
+					model.addElement(insts.get(i).getInstanceId());
+				list.setSelectedIndex(0);
+			}
+		});
 		btnLauch.setBounds(446, 49, 93, 23);
 		frame.getContentPane().add(btnLauch);
 
@@ -148,7 +231,7 @@ public class EC2Console {
 
 		boolean done = false;
 		DescribeInstancesRequest request = new DescribeInstancesRequest();
-		List<Instance> insts = new ArrayList<Instance>();
+		insts.clear();
 		while (!done) {
 			DescribeInstancesResult response = InitialWindow.ec2Client.describeInstances(request);
 			for (Reservation reservation : response.getReservations())
@@ -172,18 +255,6 @@ public class EC2Console {
 			model.addElement(insts.get(i).getInstanceId());
 		list.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e) {
-//				String selected_bucket = list.getSelectedValue();
-//				System.out.println(selected_bucket);
-//				System.out.println(list.getSelectedIndex());
-//				if (list.getSelectedIndex() == -1)
-//					list.setSelectedIndex(0);
-//				else {
-//					ListObjectsV2Result result = InitialWindow.s3Client.listObjectsV2(selected_bucket);
-//					List<S3ObjectSummary> objects = result.getObjectSummaries();
-//					model_1.clear();
-//					for (int i = 0; i < objects.size(); i++)
-//						model_1.addElement(objects.get(i).getKey());
-//				}
 				String selected_instance = list.getSelectedValue();
 				System.out.println(selected_instance);
 				if (list.getSelectedIndex() == -1)
@@ -198,20 +269,19 @@ public class EC2Console {
 									+ "and monitoring state %s" + "\n",
 							temp.getInstanceId(), temp.getImageId(), temp.getInstanceType(), temp.getState().getName(),
 							temp.getMonitoring().getState());
-//					for(int i = 0; i < m.getRowCount(); i++)
-//						m.removeRow(i);
+
 					m.setRowCount(0);
 					String instNam = "";
-					for(Tag tag : temp.getTags())
-						if(tag.getKey().equals("Name"))
+					for (Tag tag : temp.getTags())
+						if (tag.getKey().equals("Name"))
 							instNam = tag.getValue();
-					m.addRow(new Object[] {"Name", instNam});
-					m.addRow(new Object[] {"AIM", temp.getImageId()});
-					m.addRow(new Object[] {"Type", temp.getInstanceType()});
-					m.addRow(new Object[] {"State", temp.getState().getName()});
-					m.addRow(new Object[] {"Monit State", temp.getMonitoring().getState()});
+					m.addRow(new Object[] { "Name", instNam });
+					m.addRow(new Object[] { "AIM", temp.getImageId() });
+					m.addRow(new Object[] { "Type", temp.getInstanceType() });
+					m.addRow(new Object[] { "State", temp.getState().getName() });
+					m.addRow(new Object[] { "Monit State", temp.getMonitoring().getState() });
 				}
-				
+
 			}
 		});
 
