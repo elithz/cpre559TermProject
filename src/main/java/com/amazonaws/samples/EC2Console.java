@@ -35,6 +35,7 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceStateChange;
 import com.amazonaws.services.ec2.model.InstanceType;
 import com.amazonaws.services.ec2.model.KeyPairInfo;
+import com.amazonaws.services.ec2.model.RebootInstancesRequest;
 import com.amazonaws.services.ec2.model.Region;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
@@ -166,7 +167,6 @@ public class EC2Console {
 					DescribeRegionsResult drr = InitialWindow.ec2Client.describeRegions();
 					for (Region r : drr.getRegions())
 						System.out.println(r.getRegionName());
-//					InitialWindow.ec2Client.zon
 					String image_id = null;
 					String instance_type = null;
 					String key_pair = null;
@@ -214,15 +214,8 @@ public class EC2Console {
 				while (!done) {
 					DescribeInstancesResult response = InitialWindow.ec2Client.describeInstances(request);
 					for (Reservation reservation : response.getReservations())
-						for (Instance instance : reservation.getInstances()) {
-							System.out.printf(
-									"Found instance with id %s, " + "AMI %s, " + "type %s, " + "state %s "
-											+ "and monitoring state %s" + "\n",
-									instance.getInstanceId(), instance.getImageId(), instance.getInstanceType(),
-									instance.getState().getName(), instance.getMonitoring().getState());
+						for (Instance instance : reservation.getInstances())
 							insts.add(instance);
-
-						}
 
 					request.setNextToken(response.getNextToken());
 					if (response.getNextToken() == null)
@@ -246,11 +239,7 @@ public class EC2Console {
 				for (int i = 0; i < insts.size(); i++)
 					if (insts.get(i).getInstanceId().equals(list.getSelectedValue()))
 						temp = insts.get(i);
-				System.out.printf(
-						"Found instance with id %s, " + "AMI %s, " + "type %s, " + "state %s "
-								+ "and monitoring state %s" + "\n",
-						temp.getInstanceId(), temp.getImageId(), temp.getInstanceType(), temp.getState().getName(),
-						temp.getMonitoring().getState());
+
 				TerminateInstancesRequest tir = new TerminateInstancesRequest().withInstanceIds(temp.getInstanceId());
 				TerminateInstancesResult tirst = InitialWindow.ec2Client.terminateInstances(tir);
 				for (InstanceStateChange isc : tirst.getTerminatingInstances())
@@ -263,9 +252,9 @@ public class EC2Console {
 				while (!done) {
 					DescribeInstancesResult response = InitialWindow.ec2Client.describeInstances(request);
 					for (Reservation reservation : response.getReservations())
-						for (Instance instance : reservation.getInstances()) 
+						for (Instance instance : reservation.getInstances())
 							insts.add(instance);
-					
+
 					request.setNextToken(response.getNextToken());
 					if (response.getNextToken() == null)
 						done = true;
@@ -288,22 +277,18 @@ public class EC2Console {
 				for (int i = 0; i < insts.size(); i++)
 					if (insts.get(i).getInstanceId().equals(list.getSelectedValue()))
 						temp = insts.get(i);
-				System.out.printf(
-						"Found instance with id %s, " + "AMI %s, " + "type %s, " + "state %s "
-								+ "and monitoring state %s" + "\n",
-						temp.getInstanceId(), temp.getImageId(), temp.getInstanceType(), temp.getState().getName(),
-						temp.getMonitoring().getState());
+
 				StopInstancesRequest stop_request = new StopInstancesRequest().withInstanceIds(temp.getInstanceId());
 
 				InitialWindow.ec2Client.stopInstances(stop_request);
-				
+
 				boolean done = false;
 				DescribeInstancesRequest request = new DescribeInstancesRequest();
 				insts.clear();
 				while (!done) {
 					DescribeInstancesResult response = InitialWindow.ec2Client.describeInstances(request);
 					for (Reservation reservation : response.getReservations())
-						for (Instance instance : reservation.getInstances()) 
+						for (Instance instance : reservation.getInstances())
 							insts.add(instance);
 
 					request.setNextToken(response.getNextToken());
@@ -328,22 +313,18 @@ public class EC2Console {
 				for (int i = 0; i < insts.size(); i++)
 					if (insts.get(i).getInstanceId().equals(list.getSelectedValue()))
 						temp = insts.get(i);
-				System.out.printf(
-						"Found instance with id %s, " + "AMI %s, " + "type %s, " + "state %s "
-								+ "and monitoring state %s" + "\n",
-						temp.getInstanceId(), temp.getImageId(), temp.getInstanceType(), temp.getState().getName(),
-						temp.getMonitoring().getState());
+
 				StartInstancesRequest start_request = new StartInstancesRequest().withInstanceIds(temp.getInstanceId());
 
 				InitialWindow.ec2Client.startInstances(start_request);
-				
+
 				boolean done = false;
 				DescribeInstancesRequest request = new DescribeInstancesRequest();
 				insts.clear();
 				while (!done) {
 					DescribeInstancesResult response = InitialWindow.ec2Client.describeInstances(request);
 					for (Reservation reservation : response.getReservations())
-						for (Instance instance : reservation.getInstances()) 
+						for (Instance instance : reservation.getInstances())
 							insts.add(instance);
 
 					request.setNextToken(response.getNextToken());
@@ -360,6 +341,39 @@ public class EC2Console {
 		frame.getContentPane().add(btnRun);
 
 		JButton btnReboot = new JButton("Reboot");
+		btnReboot.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String selected_instance = list.getSelectedValue();
+				System.out.println(selected_instance);
+				Instance temp = null;
+				for (int i = 0; i < insts.size(); i++)
+					if (insts.get(i).getInstanceId().equals(list.getSelectedValue()))
+						temp = insts.get(i);
+
+				RebootInstancesRequest start_request = new RebootInstancesRequest()
+						.withInstanceIds(temp.getInstanceId());
+
+				InitialWindow.ec2Client.rebootInstances(start_request);
+
+				boolean done = false;
+				DescribeInstancesRequest request = new DescribeInstancesRequest();
+				insts.clear();
+				while (!done) {
+					DescribeInstancesResult response = InitialWindow.ec2Client.describeInstances(request);
+					for (Reservation reservation : response.getReservations())
+						for (Instance instance : reservation.getInstances())
+							insts.add(instance);
+
+					request.setNextToken(response.getNextToken());
+					if (response.getNextToken() == null)
+						done = true;
+				}
+				model.clear();
+				for (int i = 0; i < insts.size(); i++)
+					model.addElement(insts.get(i).getInstanceId());
+				list.setSelectedIndex(0);
+			}
+		});
 		btnReboot.setBounds(446, 181, 93, 23);
 		frame.getContentPane().add(btnReboot);
 

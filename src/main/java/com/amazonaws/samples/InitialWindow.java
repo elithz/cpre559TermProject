@@ -171,6 +171,10 @@ public class InitialWindow {
 		lblRegion.setBounds(54, 124, 54, 15);
 		panel.add(lblRegion);
 		
+		JLabel lblNewLabel = new JLabel("Presented By: NERVE Software");
+		lblNewLabel.setBounds(314, 297, 213, 15);
+		panel.add(lblNewLabel);
+		
 		
 
         
