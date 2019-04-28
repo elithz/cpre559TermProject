@@ -41,6 +41,7 @@ import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.SecurityGroup;
 import com.amazonaws.services.ec2.model.StartInstancesRequest;
+import com.amazonaws.services.ec2.model.StopInstancesRequest;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
@@ -279,6 +280,42 @@ public class EC2Console {
 		frame.getContentPane().add(btnTerminate);
 
 		JButton btnStop = new JButton("Stop");
+		btnStop.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String selected_instance = list.getSelectedValue();
+				System.out.println(selected_instance);
+				Instance temp = null;
+				for (int i = 0; i < insts.size(); i++)
+					if (insts.get(i).getInstanceId().equals(list.getSelectedValue()))
+						temp = insts.get(i);
+				System.out.printf(
+						"Found instance with id %s, " + "AMI %s, " + "type %s, " + "state %s "
+								+ "and monitoring state %s" + "\n",
+						temp.getInstanceId(), temp.getImageId(), temp.getInstanceType(), temp.getState().getName(),
+						temp.getMonitoring().getState());
+				StopInstancesRequest stop_request = new StopInstancesRequest().withInstanceIds(temp.getInstanceId());
+
+				InitialWindow.ec2Client.stopInstances(stop_request);
+				
+				boolean done = false;
+				DescribeInstancesRequest request = new DescribeInstancesRequest();
+				insts.clear();
+				while (!done) {
+					DescribeInstancesResult response = InitialWindow.ec2Client.describeInstances(request);
+					for (Reservation reservation : response.getReservations())
+						for (Instance instance : reservation.getInstances()) 
+							insts.add(instance);
+
+					request.setNextToken(response.getNextToken());
+					if (response.getNextToken() == null)
+						done = true;
+				}
+				model.clear();
+				for (int i = 0; i < insts.size(); i++)
+					model.addElement(insts.get(i).getInstanceId());
+				list.setSelectedIndex(0);
+			}
+		});
 		btnStop.setBounds(446, 148, 93, 23);
 		frame.getContentPane().add(btnStop);
 
