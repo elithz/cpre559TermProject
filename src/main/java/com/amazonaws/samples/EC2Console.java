@@ -196,11 +196,12 @@ public class EC2Console {
 						System.out.println("InstanceCreation canceled");
 					}
 					if (image_id != null && instance_type != null && key_pair != null && security_group != null) {
-						System.out
-								.println(image_id + " " + instance_type + " " + key_pair + " " + security_group + "--");
+						System.out.println(
+								image_id + " " + instance_type + " " + key_pair + " " + security_group + " --debug");
 						RunInstancesRequest runInstancesRequest = new RunInstancesRequest().withImageId(image_id)
 								.withInstanceType(instance_type).withMinCount(1).withMaxCount(1).withKeyName(key_pair)
 								.withSecurityGroups(security_group);
+
 						RunInstancesResult result = InitialWindow.ec2Client.runInstances(runInstancesRequest);
 					}
 				} catch (AmazonS3Exception e1) {
