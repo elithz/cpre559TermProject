@@ -1,36 +1,33 @@
 package com.amazonaws.samples;
 
+import java.awt.Choice;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
-import javax.swing.JPasswordField;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
+import javax.swing.table.DefaultTableModel;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.ec2.model.DescribeImagesResult;
+import com.amazonaws.services.ec2.model.DeleteSubnetRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.DescribeKeyPairsResult;
 import com.amazonaws.services.ec2.model.DescribeRegionsResult;
 import com.amazonaws.services.ec2.model.DescribeSecurityGroupsResult;
-import com.amazonaws.services.ec2.model.Image;
+import com.amazonaws.services.ec2.model.DescribeSubnetsRequest;
+import com.amazonaws.services.ec2.model.DescribeSubnetsResult;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceStateChange;
 import com.amazonaws.services.ec2.model.InstanceType;
@@ -43,41 +40,11 @@ import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.SecurityGroup;
 import com.amazonaws.services.ec2.model.StartInstancesRequest;
 import com.amazonaws.services.ec2.model.StopInstancesRequest;
+import com.amazonaws.services.ec2.model.Subnet;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
-import com.amazonaws.services.mediastoredata.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.DeleteObjectsRequest;
-import com.amazonaws.services.s3.model.ListObjectsV2Result;
-import com.amazonaws.services.s3.model.ListVersionsRequest;
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.amazonaws.services.s3.model.S3VersionSummary;
-import com.amazonaws.services.s3.model.VersionListing;
-
-import javax.swing.JLabel;
-import javax.swing.ListModel;
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-import javax.swing.JSeparator;
-import javax.swing.JComboBox;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.LineBorder;
-
-import java.awt.Choice;
-import java.awt.Color;
-import java.awt.Component;
-
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.JScrollPane;
 
 public class EC2Console {
 
@@ -149,12 +116,19 @@ public class EC2Console {
 				for (InstanceType it : InstanceType.values())
 					it_name.add(it.toString());
 
-				DescribeSecurityGroupsResult rsps_sg = InitialWindow.ec2Client.describeSecurityGroups();
-				List<String> sg_name = new ArrayList<String>();
-				for (SecurityGroup security_group : rsps_sg.getSecurityGroups()) {
-					System.out.printf("Found security group with name %s ", security_group.getDescription() + "\n");
-					sg_name.add(security_group.getGroupName());
-				}
+//				DescribeSecurityGroupsResult rsps_sg = InitialWindow.ec2Client.describeSecurityGroups();
+//				List<String> sg_name = new ArrayList<String>();
+//				for (SecurityGroup security_group : rsps_sg.getSecurityGroups()) {
+//					System.out.printf("Found security group with name %s ", security_group.getDescription() + "\n");
+//					sg_name.add(security_group.getGroupName());
+//				}
+
+				DescribeSubnetsResult describeSubnetsResult = InitialWindow.ec2Client.describeSubnets();
+				List<String> sn_name = new ArrayList<String>();
+				for (Subnet subnet : describeSubnetsResult.getSubnets())
+					for (Tag tag : subnet.getTags())
+						if (tag.getKey().equals("Name"))
+							sn_name.add(tag.getValue());
 
 //				DescribeImagesResult rsps_ii = InitialWindow.ec2Client.describeImages();
 //				List<String> ii_id = new ArrayList<String>();
@@ -171,19 +145,31 @@ public class EC2Console {
 					String instance_type = null;
 					String key_pair = null;
 					String security_group = null;
+					String sg_id = "";
+					String subnet_1 = "";
+					String sn_id = "";
+					
 					System.out.println("Creating ec2 instance");
 					JTextField imageId = new JTextField();
 					Choice instanceType = new Choice();
 					for (String itname : it_name)
 						instanceType.add(itname);
+					
 					Choice keyPair = new Choice();
 					for (String keypair : kp_name)
 						keyPair.add(keypair);
-					Choice securityGroup = new Choice();
-					for (String securitygroup : sg_name)
-						securityGroup.add(securitygroup);
-					Object[] message = { "imageId:", imageId, "instanceType:", instanceType, "keyPair:", keyPair,
-							"securityGroup", securityGroup };
+					
+//					Choice securityGroup = new Choice();
+//					for (String securitygroup : sg_name)
+//						securityGroup.add(securitygroup);
+					
+					Choice subNet = new Choice();
+					for (String sub_net : sn_name)
+						subNet.add(sub_net);
+					
+					Object[] message = { "image ID:", imageId, "instance type:", instanceType, "key pair:", keyPair, "subnet:", subNet };
+					
+//					, "security group:", securityGroup
 
 					int option = JOptionPane.showConfirmDialog(null, message, "Creat Instance",
 							JOptionPane.OK_CANCEL_OPTION);
@@ -191,7 +177,18 @@ public class EC2Console {
 						image_id = imageId.getText();
 						instance_type = instanceType.getSelectedItem();
 						key_pair = keyPair.getSelectedItem();
-						security_group = securityGroup.getSelectedItem();
+//						security_group = securityGroup.getSelectedItem();
+						subnet_1 = subNet.getSelectedItem();
+						
+//						for (SecurityGroup security_group_id : rsps_sg.getSecurityGroups())
+//							if (security_group_id.getGroupName().equals(security_group))
+//								sg_id = security_group_id.getGroupId();
+						
+						for (Subnet subnet_id : describeSubnetsResult.getSubnets())
+							for (Tag tag : subnet_id.getTags())
+								if (tag.getValue().equals(subnet_1))
+									sn_id = subnet_id.getSubnetId();
+						
 					} else {
 						System.out.println("InstanceCreation canceled");
 					}
@@ -200,7 +197,8 @@ public class EC2Console {
 								image_id + " " + instance_type + " " + key_pair + " " + security_group + " --debug");
 						RunInstancesRequest runInstancesRequest = new RunInstancesRequest().withImageId(image_id)
 								.withInstanceType(instance_type).withMinCount(1).withMaxCount(1).withKeyName(key_pair)
-								.withSecurityGroups(security_group);
+								.withSubnetId(sn_id);
+//						withSecurityGroups(security_group).withSecurityGroupIds(sg_id).
 
 						RunInstancesResult result = InitialWindow.ec2Client.runInstances(runInstancesRequest);
 					}
