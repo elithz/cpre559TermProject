@@ -26,6 +26,7 @@ import javax.swing.table.TableModel;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.ec2.model.CreateVpcRequest;
+import com.amazonaws.services.ec2.model.CreateVpcResult;
 import com.amazonaws.services.ec2.model.DescribeImagesResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
@@ -121,7 +122,7 @@ public class VPCConsole {
 	private void initialize() {
 		frame = new JFrame();
 		frame.setBounds(100, 100, 590, 361);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 
 		model = new DefaultListModel<>();
@@ -157,9 +158,6 @@ public class VPCConsole {
 		btnAddVpc.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
-					DescribeRegionsResult drr = InitialWindow.ec2Client.describeRegions();
-					for (Region r : drr.getRegions())
-						System.out.println(r.getRegionName());
 					String name_tag = null;
 					String IPv4_CIDR_block = null;
 					String IPv6_CIDR_block = null;
@@ -171,8 +169,8 @@ public class VPCConsole {
 					ipv6CIDRblock.add("No IPv6 CIDR Block");
 					ipv6CIDRblock.add("Amazon provided IPv6 CIDR block");
 					Choice tenancy = new Choice();
-					tenancy.add("Dedicated");
-					tenancy.add("Defult");
+					tenancy.add("dedicated");
+					tenancy.add("default");
 					
 					Object[] message = { "Name Tag:", nametag, "IPv4 CIDR block:", ipv4CIDRblock, "IPv6 CIDR block:", ipv6CIDRblock,
 							"Tenancy", tenancy };
@@ -190,8 +188,32 @@ public class VPCConsole {
 					if (IPv4_CIDR_block != null && IPv6_CIDR_block != null && Tenancy != null) {
 						System.out
 								.println(name_tag + " " + IPv4_CIDR_block + " " + IPv6_CIDR_block + " " + Tenancy + "-- debug");
-						CreateVpcRequest createVpcRequest = new CreateVpcRequest().withCidrBlock(IPv4_CIDR_block).withInstanceTenancy(Tenancy).with;
-						RunInstancesResult result = InitialWindow.ec2Client.runInstances(runInstancesRequest);
+						CreateVpcRequest createVpcRequest = new CreateVpcRequest();
+						if(IPv6_CIDR_block.equals("No IPv6 CIDR Block"))
+							createVpcRequest = new CreateVpcRequest().withCidrBlock(IPv4_CIDR_block).withInstanceTenancy(Tenancy).withAmazonProvidedIpv6CidrBlock(false);
+						else
+							createVpcRequest = new CreateVpcRequest().withCidrBlock(IPv4_CIDR_block).withInstanceTenancy(Tenancy).withAmazonProvidedIpv6CidrBlock(true);
+						CreateVpcResult createVpcResult = InitialWindow.ec2Client.createVpc(createVpcRequest);
+						List<Tag> tag = new ArrayList<Tag>();
+						tag.add(new Tag("Name", name_tag));
+						createVpcResult.getVpc().setTags(tag);
+						System.out.println("creation done.");
+						
+						boolean done = false;
+						DescribeVpcsRequest request = new DescribeVpcsRequest();
+						vpcs.clear();
+						while (!done) {
+							DescribeVpcsResult response = InitialWindow.ec2Client.describeVpcs(request);
+							for (Vpc vpc : response.getVpcs())
+								vpcs.add(vpc);
+							request.setNextToken(response.getNextToken());
+							if (response.getNextToken() == null)
+								done = true;
+						}
+
+						model.clear();
+						for (int i = 0; i < vpcs.size(); i++)
+							model.addElement(vpcs.get(i).getVpcId());
 					}
 				} catch (AmazonS3Exception e1) {
 					JOptionPane.showMessageDialog(null, "e1.getErrorMessage()");

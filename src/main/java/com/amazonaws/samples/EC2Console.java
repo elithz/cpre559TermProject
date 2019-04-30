@@ -116,7 +116,7 @@ public class EC2Console {
 	private void initialize() {
 		frame = new JFrame();
 		frame.setBounds(100, 100, 590, 361);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 
 		model = new DefaultListModel<>();
