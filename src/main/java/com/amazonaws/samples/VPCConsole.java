@@ -28,6 +28,7 @@ import com.amazonaws.services.ec2.model.DeleteVpcResult;
 import com.amazonaws.services.ec2.model.DescribeVpcsRequest;
 import com.amazonaws.services.ec2.model.DescribeVpcsResult;
 import com.amazonaws.services.ec2.model.Tag;
+import com.amazonaws.services.ec2.model.Tenancy;
 import com.amazonaws.services.ec2.model.Vpc;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 
@@ -107,19 +108,19 @@ public class VPCConsole {
 					String name_tag = null;
 					String IPv4_CIDR_block = null;
 					String IPv6_CIDR_block = null;
-					String Tenancy = null;
+					Tenancy tenancy = null;
 					System.out.println("Creating VPC ...");
 					JTextField nametag = new JTextField();
 					JTextField ipv4CIDRblock = new JTextField();
 					Choice ipv6CIDRblock = new Choice();
 					ipv6CIDRblock.add("No IPv6 CIDR Block");
 					ipv6CIDRblock.add("Amazon provided IPv6 CIDR block");
-					Choice tenancy = new Choice();
-					tenancy.add("dedicated");
-					tenancy.add("default");
+					Choice tenancychoice = new Choice();
+					tenancychoice.add("Default");
+					tenancychoice.add("Dedicated");
 
 					Object[] message = { "Name Tag:", nametag, "IPv4 CIDR block:", ipv4CIDRblock, "IPv6 CIDR block:",
-							ipv6CIDRblock, "Tenancy", tenancy };
+							ipv6CIDRblock, "Tenancy", tenancychoice };
 
 					int option = JOptionPane.showConfirmDialog(null, message, "Creat VPC",
 							JOptionPane.OK_CANCEL_OPTION);
@@ -127,20 +128,23 @@ public class VPCConsole {
 						name_tag = nametag.getText();
 						IPv4_CIDR_block = ipv4CIDRblock.getText();
 						IPv6_CIDR_block = ipv6CIDRblock.getSelectedItem();
-						Tenancy = tenancy.getSelectedItem();
+						if(tenancychoice.getSelectedItem().equals("Default"))
+							tenancy = Tenancy.Default;
+						else
+							tenancy = Tenancy.Dedicated;
 					} else {
 						System.out.println("VPC Creation canceled");
 					}
-					if (IPv4_CIDR_block != null && IPv6_CIDR_block != null && Tenancy != null) {
+					if (IPv4_CIDR_block != null && IPv6_CIDR_block != null && tenancy != null) {
 						System.out.println(
-								name_tag + " " + IPv4_CIDR_block + " " + IPv6_CIDR_block + " " + Tenancy + "-- debug");
+								name_tag + " " + IPv4_CIDR_block + " " + IPv6_CIDR_block + " " + tenancy.name() + "-- debug");
 						CreateVpcRequest createVpcRequest = new CreateVpcRequest();
 						if (IPv6_CIDR_block.equals("No IPv6 CIDR Block"))
 							createVpcRequest = new CreateVpcRequest().withCidrBlock(IPv4_CIDR_block)
-									.withInstanceTenancy(Tenancy).withAmazonProvidedIpv6CidrBlock(false);
+									.withInstanceTenancy(tenancy).withAmazonProvidedIpv6CidrBlock(false);
 						else
 							createVpcRequest = new CreateVpcRequest().withCidrBlock(IPv4_CIDR_block)
-									.withInstanceTenancy(Tenancy).withAmazonProvidedIpv6CidrBlock(true);
+									.withInstanceTenancy(tenancy).withAmazonProvidedIpv6CidrBlock(true);
 
 						CreateVpcResult createVpcResult = InitialWindow.ec2Client.createVpc(createVpcRequest);
 						List<Tag> tag = new ArrayList<Tag>();
