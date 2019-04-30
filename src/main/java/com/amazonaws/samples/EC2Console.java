@@ -20,6 +20,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 
+import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.DeleteSubnetRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
@@ -42,8 +43,10 @@ import com.amazonaws.services.ec2.model.StartInstancesRequest;
 import com.amazonaws.services.ec2.model.StopInstancesRequest;
 import com.amazonaws.services.ec2.model.Subnet;
 import com.amazonaws.services.ec2.model.Tag;
+import com.amazonaws.services.ec2.model.TagSpecification;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
+import com.amazonaws.services.ec2.model.Vpc;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 
 public class EC2Console {
@@ -144,10 +147,11 @@ public class EC2Console {
 					String image_id = null;
 					String instance_type = null;
 					String key_pair = null;
-					String security_group = null;
-					String sg_id = "";
+//					String security_group = null;
+//					String sg_id = "";
 					String subnet_1 = "";
 					String sn_id = "";
+					String inst_name = "";
 					
 					System.out.println("Creating ec2 instance");
 					JTextField imageId = new JTextField();
@@ -167,7 +171,9 @@ public class EC2Console {
 					for (String sub_net : sn_name)
 						subNet.add(sub_net);
 					
-					Object[] message = { "image ID:", imageId, "instance type:", instanceType, "key pair:", keyPair, "subnet:", subNet };
+					JTextField instName = new JTextField();
+					
+					Object[] message = { "image ID:", imageId, "instance type:", instanceType, "key pair:", keyPair, "subnet:", subNet, "istance name:", instName };
 					
 //					, "security group:", securityGroup
 
@@ -179,6 +185,7 @@ public class EC2Console {
 						key_pair = keyPair.getSelectedItem();
 //						security_group = securityGroup.getSelectedItem();
 						subnet_1 = subNet.getSelectedItem();
+						inst_name = instName.getText();
 						
 //						for (SecurityGroup security_group_id : rsps_sg.getSecurityGroups())
 //							if (security_group_id.getGroupName().equals(security_group))
@@ -192,15 +199,19 @@ public class EC2Console {
 					} else {
 						System.out.println("InstanceCreation canceled");
 					}
-					if (image_id != null && instance_type != null && key_pair != null && security_group != null) {
+					if (image_id != null && instance_type != null && key_pair != null && sn_id != null) {
 						System.out.println(
-								image_id + " " + instance_type + " " + key_pair + " " + security_group + " --debug");
+								image_id + " " + instance_type + " " + key_pair + " " + sn_id + " " + inst_name + " --debug");
+						
+						List<Tag> tags = new ArrayList<Tag>();
+						tags.add(new Tag("Name", inst_name));
+						TagSpecification tagconfig = new TagSpecification().withTags(tags);
 						RunInstancesRequest runInstancesRequest = new RunInstancesRequest().withImageId(image_id)
 								.withInstanceType(instance_type).withMinCount(1).withMaxCount(1).withKeyName(key_pair)
-								.withSubnetId(sn_id);
+								.withSubnetId(sn_id).withTagSpecifications(tagconfig);
 //						withSecurityGroups(security_group).withSecurityGroupIds(sg_id).
 
-						RunInstancesResult result = InitialWindow.ec2Client.runInstances(runInstancesRequest);
+						InitialWindow.ec2Client.runInstances(runInstancesRequest);
 					}
 				} catch (AmazonS3Exception e1) {
 					JOptionPane.showMessageDialog(null, "e1.getErrorMessage()");
