@@ -36,6 +36,7 @@ import com.amazonaws.services.ec2.model.KeyPairInfo;
 import com.amazonaws.services.ec2.model.RebootInstancesRequest;
 import com.amazonaws.services.ec2.model.Region;
 import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.ResourceType;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.SecurityGroup;
@@ -205,7 +206,7 @@ public class EC2Console {
 						
 						List<Tag> tags = new ArrayList<Tag>();
 						tags.add(new Tag("Name", inst_name));
-						TagSpecification tagconfig = new TagSpecification().withTags(tags);
+						TagSpecification tagconfig = new TagSpecification().withTags(tags).withResourceType(ResourceType.Instance);
 						RunInstancesRequest runInstancesRequest = new RunInstancesRequest().withImageId(image_id)
 								.withInstanceType(instance_type).withMinCount(1).withMaxCount(1).withKeyName(key_pair)
 								.withSubnetId(sn_id).withTagSpecifications(tagconfig);
