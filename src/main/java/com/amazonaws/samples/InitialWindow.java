@@ -15,7 +15,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JPopupMenu;
-import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.text.DefaultEditorKit;
@@ -68,21 +67,21 @@ public class InitialWindow {
 	 */
 	private void initialize() {
 		JPopupMenu menu = new JPopupMenu();
-        Action cut = new DefaultEditorKit.CutAction();
-        cut.putValue(Action.NAME, "Cut");
-        cut.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke("control X"));
-        menu.add( cut );
+		Action cut = new DefaultEditorKit.CutAction();
+		cut.putValue(Action.NAME, "Cut");
+		cut.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke("control X"));
+		menu.add(cut);
 
-        Action copy = new DefaultEditorKit.CopyAction();
-        copy.putValue(Action.NAME, "Copy");
-        copy.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke("control C"));
-        menu.add( copy );
+		Action copy = new DefaultEditorKit.CopyAction();
+		copy.putValue(Action.NAME, "Copy");
+		copy.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke("control C"));
+		menu.add(copy);
 
-        Action paste = new DefaultEditorKit.PasteAction();
-        paste.putValue(Action.NAME, "Paste");
-        paste.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke("control V"));
-        menu.add( paste );
-        
+		Action paste = new DefaultEditorKit.PasteAction();
+		paste.putValue(Action.NAME, "Paste");
+		paste.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke("control V"));
+		menu.add(paste);
+
 		frmHi = new JFrame();
 		frmHi.setTitle("AWS Simple GUI Tool");
 		frmHi.setBounds(100, 100, 553, 361);
@@ -96,14 +95,14 @@ public class InitialWindow {
 		textField.setBounds(182, 82, 154, 21);
 		panel.add(textField);
 		textField.setColumns(10);
-		textField.setComponentPopupMenu( menu );
+		textField.setComponentPopupMenu(menu);
 
 		textField_1 = new JPasswordField();
 		textField_1.setColumns(10);
 		textField_1.setBounds(182, 51, 154, 21);
 		panel.add(textField_1);
-		textField_1.setComponentPopupMenu( menu );
-		
+		textField_1.setComponentPopupMenu(menu);
+
 		Choice choice = new Choice();
 		choice.setBounds(182, 124, 113, 21);
 		choice.addItem("us-east-1");
@@ -158,18 +157,14 @@ public class InitialWindow {
 		JLabel lblIamSecretAccess = new JLabel("IAM Secret Access Key");
 		lblIamSecretAccess.setBounds(20, 85, 146, 15);
 		panel.add(lblIamSecretAccess);
-		
+
 		JLabel lblRegion = new JLabel("Region");
 		lblRegion.setBounds(54, 124, 54, 15);
 		panel.add(lblRegion);
-		
+
 		JLabel lblNewLabel = new JLabel("Presented By: NERVE Software");
 		lblNewLabel.setBounds(314, 297, 213, 15);
 		panel.add(lblNewLabel);
-		
-		
 
-        
-		
 	}
 }

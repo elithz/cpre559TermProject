@@ -16,11 +16,15 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 
 import com.amazonaws.services.ec2.model.AssociateRouteTableRequest;
+import com.amazonaws.services.ec2.model.AttachInternetGatewayRequest;
+import com.amazonaws.services.ec2.model.CreateInternetGatewayRequest;
+import com.amazonaws.services.ec2.model.CreateInternetGatewayResult;
 import com.amazonaws.services.ec2.model.CreateRouteTableRequest;
 import com.amazonaws.services.ec2.model.CreateRouteTableResult;
 import com.amazonaws.services.ec2.model.CreateSubnetRequest;
@@ -30,7 +34,6 @@ import com.amazonaws.services.ec2.model.CreateVpcRequest;
 import com.amazonaws.services.ec2.model.CreateVpcResult;
 import com.amazonaws.services.ec2.model.DeleteVpcRequest;
 import com.amazonaws.services.ec2.model.DeleteVpcResult;
-import com.amazonaws.services.ec2.model.DescribeRouteTablesRequest;
 import com.amazonaws.services.ec2.model.DescribeRouteTablesResult;
 import com.amazonaws.services.ec2.model.DescribeSubnetsResult;
 import com.amazonaws.services.ec2.model.DescribeVpcsRequest;
@@ -40,9 +43,7 @@ import com.amazonaws.services.ec2.model.Subnet;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.Tenancy;
 import com.amazonaws.services.ec2.model.Vpc;
-import com.amazonaws.services.ec2.model.transform.DescribeRouteTablesRequestMarshaller;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
-import javax.swing.SwingConstants;
 
 public class VPCConsole {
 
@@ -326,8 +327,6 @@ public class VPCConsole {
 					CreateVpcResult createVpcResult = InitialWindow.ec2Client.createVpc(createVpcRequest);
 					List<Tag> tag = new ArrayList<Tag>();
 					tag.add(new Tag("Name", name_tag));
-					Vpc tem = createVpcResult.getVpc();
-					tem.setTags(tag);
 					String createdVpcId = createVpcResult.getVpc().getVpcId();
 					CreateTagsRequest createTagsRequest = new CreateTagsRequest();
 					createTagsRequest.setTags(tag);
@@ -336,47 +335,72 @@ public class VPCConsole {
 					System.out.println("VPC creation done.");
 
 					CreateRouteTableRequest createRouteTableRequest = new CreateRouteTableRequest()
-							.withVpcId(tem.getVpcId());
+							.withVpcId(createdVpcId);
 					CreateRouteTableResult createRouteTableResult = InitialWindow.ec2Client
 							.createRouteTable(createRouteTableRequest);
-					String routetableid = createRouteTableResult.getRouteTable().getRouteTableId();
+					String routetableid_private = createRouteTableResult.getRouteTable().getRouteTableId();
 					List<Tag> tag1 = new ArrayList<Tag>();
 					tag1.add(new Tag("Name", name_tag + "privateroutetable"));
 					CreateTagsRequest createTagsRequest1 = new CreateTagsRequest();
-					createTagsRequest1.setTags(tag);
-					createTagsRequest1.withResources(routetableid);
+					createTagsRequest1.setTags(tag1);
+					createTagsRequest1.withResources(routetableid_private);
 					InitialWindow.ec2Client.createTags(createTagsRequest1);
 
 					CreateRouteTableRequest createRouteTableRequest1 = new CreateRouteTableRequest()
-							.withVpcId(tem.getVpcId());
+							.withVpcId(createdVpcId);
 					CreateRouteTableResult createRouteTableResult1 = InitialWindow.ec2Client
 							.createRouteTable(createRouteTableRequest1);
-					String routetableid1 = createRouteTableResult1.getRouteTable().getRouteTableId();
+					String routetableid_public = createRouteTableResult1.getRouteTable().getRouteTableId();
 					List<Tag> tag2 = new ArrayList<Tag>();
 					tag2.add(new Tag("Name", name_tag + "publicroutetable"));
 					CreateTagsRequest createTagsRequest2 = new CreateTagsRequest();
-					createTagsRequest2.setTags(tag);
-					createTagsRequest2.withResources(routetableid1);
+					createTagsRequest2.setTags(tag2);
+					createTagsRequest2.withResources(routetableid_public);
 					InitialWindow.ec2Client.createTags(createTagsRequest2);
 
-					CreateSubnetRequest createSubnetRequest = new CreateSubnetRequest().withVpcId(tem.getVpcId())
-							.withCidrBlock(subnet_IPv4_CIDR_block_private).withIpv6CidrBlock(IPv6_CIDR_block);
+					CreateSubnetRequest createSubnetRequest = new CreateSubnetRequest().withVpcId(createdVpcId)
+							.withCidrBlock(subnet_IPv4_CIDR_block_private);
 					CreateSubnetResult createSubnetResult = InitialWindow.ec2Client.createSubnet(createSubnetRequest);
+					String subnetid_private = createSubnetResult.getSubnet().getSubnetId();
+					List<Tag> tag3 = new ArrayList<Tag>();
+					tag3.add(new Tag("Name", name_tag + "privaesubnet"));
+					CreateTagsRequest createTagsRequest3 = new CreateTagsRequest();
+					createTagsRequest3.setTags(tag3);
+					createTagsRequest3.withResources(subnetid_private);
+					InitialWindow.ec2Client.createTags(createTagsRequest3);
 
-					CreateSubnetRequest createSubnetRequest1 = new CreateSubnetRequest().withVpcId(tem.getVpcId())
-							.withCidrBlock(subnet_IPv4_CIDR_block_public).withIpv6CidrBlock(IPv6_CIDR_block);
+					CreateSubnetRequest createSubnetRequest1 = new CreateSubnetRequest().withVpcId(createdVpcId)
+							.withCidrBlock(subnet_IPv4_CIDR_block_public);
 					CreateSubnetResult createSubnetResult1 = InitialWindow.ec2Client.createSubnet(createSubnetRequest1);
+					String subnetid_public = createSubnetResult1.getSubnet().getSubnetId();
+					List<Tag> tag4 = new ArrayList<Tag>();
+					tag4.add(new Tag("Name", name_tag + "privaesubnet"));
+					CreateTagsRequest createTagsRequest4 = new CreateTagsRequest();
+					createTagsRequest4.setTags(tag4);
+					createTagsRequest4.withResources(subnetid_public);
+					InitialWindow.ec2Client.createTags(createTagsRequest4);
 
 					AssociateRouteTableRequest associateRouteTableRequest = new AssociateRouteTableRequest()
-							.withRouteTableId(createRouteTableResult.getRouteTable().getRouteTableId())
-							.withSubnetId(createSubnetResult.getSubnet().getSubnetId());
+							.withRouteTableId(routetableid_private).withSubnetId(subnetid_private);
 					InitialWindow.ec2Client.associateRouteTable(associateRouteTableRequest);
-					
+
 					AssociateRouteTableRequest associateRouteTableRequest1 = new AssociateRouteTableRequest()
-							.withRouteTableId(createRouteTableResult1.getRouteTable().getRouteTableId())
-							.withSubnetId(createSubnetResult1.getSubnet().getSubnetId());
+							.withRouteTableId(routetableid_public).withSubnetId(subnetid_public);
 					InitialWindow.ec2Client.associateRouteTable(associateRouteTableRequest1);
+
+					CreateInternetGatewayRequest createInternetGatewayRequest = new CreateInternetGatewayRequest();
+					CreateInternetGatewayResult createInternetGatewayResult = InitialWindow.ec2Client.createInternetGateway(createInternetGatewayRequest);
+					String igwid = createInternetGatewayResult.getInternetGateway().getInternetGatewayId();
+					List<Tag> tag5 = new ArrayList<Tag>();
+					tag5.add(new Tag("Name", name_tag + "internetgw"));
+					CreateTagsRequest createTagsRequest5 = new CreateTagsRequest();
+					createTagsRequest5.setTags(tag5);
+					createTagsRequest5.withResources(igwid);
+					InitialWindow.ec2Client.createTags(createTagsRequest5);
 					
+					AttachInternetGatewayRequest attachInternetGatewayRequest = new AttachInternetGatewayRequest().withInternetGatewayId(igwid).withVpcId(createdVpcId);
+					InitialWindow.ec2Client.attachInternetGateway(attachInternetGatewayRequest);
+
 					boolean done = false;
 					DescribeVpcsRequest request = new DescribeVpcsRequest();
 					vpcs.clear();
@@ -435,10 +459,16 @@ public class VPCConsole {
 						if (tag.getKey().equals("Name"))
 							vpcNam = tag.getValue();
 					DescribeRouteTablesResult describeRouteTablesResult = InitialWindow.ec2Client.describeRouteTables();
-					List<String> sn_id = new ArrayList<String>();
+					List<String> rt_id = new ArrayList<String>();
 					for (RouteTable routetable : describeRouteTablesResult.getRouteTables())
 						if (routetable.getVpcId().equals(temp.getVpcId()))
-							sn_id.add(routetable.getVpcId());
+							rt_id.add(routetable.getRouteTableId());
+					
+					DescribeSubnetsResult describeSubnetsResult = InitialWindow.ec2Client.describeSubnets();
+					List<String> sn_id = new ArrayList<String>();
+					for (Subnet subnet : describeSubnetsResult.getSubnets())
+						if (subnet.getVpcId().equals(temp.getVpcId()))
+							sn_id.add(subnet.getSubnetId());
 
 					m.addRow(new Object[] { "Name", vpcNam });
 					m.addRow(new Object[] { "Tenancy", temp.getInstanceTenancy() });
@@ -448,6 +478,8 @@ public class VPCConsole {
 					m.addRow(new Object[] { "Default VPC", temp.isDefault() });
 					for (String snid : sn_id)
 						m.addRow(new Object[] { "Subnet(s)", snid });
+					for (String rtid : rt_id)
+						m.addRow(new Object[] { "Routetable(s)", rtid });
 				}
 
 			}
