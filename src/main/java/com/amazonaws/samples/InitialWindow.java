@@ -13,6 +13,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
@@ -31,8 +32,8 @@ import com.amazonaws.services.s3.model.Bucket;
 public class InitialWindow {
 
 	private JFrame frmHi;
-	private JTextField textField;
-	private JTextField textField_1;
+	private JPasswordField textField;
+	private JPasswordField textField_1;
 	public BasicAWSCredentials user_credential = null;
 	public static AmazonS3 s3Client = null;
 	public static AmazonEC2 ec2Client = null;
@@ -91,13 +92,13 @@ public class InitialWindow {
 		frmHi.getContentPane().add(panel, BorderLayout.CENTER);
 		panel.setLayout(null);
 
-		textField = new JTextField();
+		textField = new JPasswordField();
 		textField.setBounds(182, 82, 154, 21);
 		panel.add(textField);
 		textField.setColumns(10);
 		textField.setComponentPopupMenu( menu );
 
-		textField_1 = new JTextField();
+		textField_1 = new JPasswordField();
 		textField_1.setColumns(10);
 		textField_1.setBounds(182, 51, 154, 21);
 		panel.add(textField_1);
