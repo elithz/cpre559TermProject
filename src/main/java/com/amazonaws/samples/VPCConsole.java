@@ -4,6 +4,8 @@ import java.awt.Choice;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,11 +27,14 @@ import com.amazonaws.services.ec2.model.AssociateRouteTableRequest;
 import com.amazonaws.services.ec2.model.AttachInternetGatewayRequest;
 import com.amazonaws.services.ec2.model.CreateInternetGatewayRequest;
 import com.amazonaws.services.ec2.model.CreateInternetGatewayResult;
+import com.amazonaws.services.ec2.model.CreateRouteRequest;
 import com.amazonaws.services.ec2.model.CreateRouteTableRequest;
 import com.amazonaws.services.ec2.model.CreateRouteTableResult;
 import com.amazonaws.services.ec2.model.CreateSubnetRequest;
 import com.amazonaws.services.ec2.model.CreateSubnetResult;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
+import com.amazonaws.services.ec2.model.CreateVpcEndpointRequest;
+import com.amazonaws.services.ec2.model.CreateVpcEndpointResult;
 import com.amazonaws.services.ec2.model.CreateVpcRequest;
 import com.amazonaws.services.ec2.model.CreateVpcResult;
 import com.amazonaws.services.ec2.model.DeleteVpcRequest;
@@ -47,7 +52,7 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 
 public class VPCConsole {
 
-	private JFrame frame;
+	private JFrame frmVpcconsole;
 	public DefaultListModel<String> model;
 	public DefaultListModel<String> model_1;
 	public List<Vpc> vpcs = new ArrayList<Vpc>();
@@ -60,7 +65,7 @@ public class VPCConsole {
 			public void run() {
 				try {
 					VPCConsole window = new VPCConsole();
-					window.frame.setVisible(true);
+					window.frmVpcconsole.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -80,25 +85,33 @@ public class VPCConsole {
 	 */
 
 	private void initialize() {
-		frame = new JFrame();
-		frame.setBounds(100, 100, 590, 361);
-		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.getContentPane().setLayout(null);
+		frmVpcconsole = new JFrame();
+		frmVpcconsole.setTitle("VPCConsole");
+		frmVpcconsole.setBounds(100, 100, 590, 361);
+		frmVpcconsole.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frmVpcconsole.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				Console.frmConsole.setEnabled(true);
+			}
+
+		});
+		frmVpcconsole.getContentPane().setLayout(null);
 
 		model = new DefaultListModel<>();
 		model_1 = new DefaultListModel<>();
 
 		JLabel lblVPC = new JLabel("VPC(s)");
 		lblVPC.setBounds(10, 27, 82, 15);
-		frame.getContentPane().add(lblVPC);
+		frmVpcconsole.getContentPane().add(lblVPC);
 
 		JLabel lblStatus = new JLabel("Status");
 		lblStatus.setBounds(198, 27, 54, 15);
-		frame.getContentPane().add(lblStatus);
+		frmVpcconsole.getContentPane().add(lblStatus);
 
 		JList<String> list = new JList<>(model);
 		list.setBounds(10, 52, 156, 260);
-		frame.getContentPane().add(list);
+		frmVpcconsole.getContentPane().add(list);
 
 		DefaultTableModel m = new DefaultTableModel();
 		JTable table = new JTable(m);
@@ -112,7 +125,7 @@ public class VPCConsole {
 		table.setBounds(30, 40, 200, 300);
 		JScrollPane scrollPane = new JScrollPane(table);
 		scrollPane.setBounds(176, 52, 260, 260);
-		frame.getContentPane().add(scrollPane);
+		frmVpcconsole.getContentPane().add(scrollPane);
 
 		JButton btnAddVpc = new JButton("Add VPC");
 		btnAddVpc.addActionListener(new ActionListener() {
@@ -194,7 +207,7 @@ public class VPCConsole {
 			}
 		});
 		btnAddVpc.setBounds(446, 52, 118, 23);
-		frame.getContentPane().add(btnAddVpc);
+		frmVpcconsole.getContentPane().add(btnAddVpc);
 
 		JButton btnDeleteVpc = new JButton("Delete VPC");
 		btnDeleteVpc.addActionListener(new ActionListener() {
@@ -224,7 +237,7 @@ public class VPCConsole {
 			}
 		});
 		btnDeleteVpc.setBounds(446, 85, 118, 23);
-		frame.getContentPane().add(btnDeleteVpc);
+		frmVpcconsole.getContentPane().add(btnDeleteVpc);
 
 		JButton button = new JButton("<html>Add Typical<br />VPC</html>");
 		button.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -288,7 +301,7 @@ public class VPCConsole {
 			}
 		});
 		button.setBounds(446, 118, 118, 39);
-		frame.getContentPane().add(button);
+		frmVpcconsole.getContentPane().add(button);
 
 		JButton button_1 = new JButton("<html>Typical VPC<br />with subnets</html>");
 		button_1.addActionListener(new ActionListener() {
@@ -389,7 +402,8 @@ public class VPCConsole {
 					InitialWindow.ec2Client.associateRouteTable(associateRouteTableRequest1);
 
 					CreateInternetGatewayRequest createInternetGatewayRequest = new CreateInternetGatewayRequest();
-					CreateInternetGatewayResult createInternetGatewayResult = InitialWindow.ec2Client.createInternetGateway(createInternetGatewayRequest);
+					CreateInternetGatewayResult createInternetGatewayResult = InitialWindow.ec2Client
+							.createInternetGateway(createInternetGatewayRequest);
 					String igwid = createInternetGatewayResult.getInternetGateway().getInternetGatewayId();
 					List<Tag> tag5 = new ArrayList<Tag>();
 					tag5.add(new Tag("Name", name_tag + "internetgw"));
@@ -397,9 +411,28 @@ public class VPCConsole {
 					createTagsRequest5.setTags(tag5);
 					createTagsRequest5.withResources(igwid);
 					InitialWindow.ec2Client.createTags(createTagsRequest5);
-					
-					AttachInternetGatewayRequest attachInternetGatewayRequest = new AttachInternetGatewayRequest().withInternetGatewayId(igwid).withVpcId(createdVpcId);
+
+					AttachInternetGatewayRequest attachInternetGatewayRequest = new AttachInternetGatewayRequest()
+							.withInternetGatewayId(igwid).withVpcId(createdVpcId);
 					InitialWindow.ec2Client.attachInternetGateway(attachInternetGatewayRequest);
+
+					CreateRouteRequest createRouteRequest = new CreateRouteRequest()
+							.withRouteTableId(routetableid_public).withGatewayId(igwid)
+							.withDestinationCidrBlock("0.0.0.0/0");
+					InitialWindow.ec2Client.createRoute(createRouteRequest);
+
+					CreateVpcEndpointRequest createVpcEndpointRequest = new CreateVpcEndpointRequest()
+							.withRouteTableIds(routetableid_private).withVpcId(createdVpcId)
+							.withServiceName("com.amazonaws.us-east-2.s3");
+					CreateVpcEndpointResult createVpcEndpointResult = InitialWindow.ec2Client
+							.createVpcEndpoint(createVpcEndpointRequest);
+					String vpceid = createVpcEndpointResult.getVpcEndpoint().getVpcEndpointId();
+					List<Tag> tag6 = new ArrayList<Tag>();
+					tag6.add(new Tag("Name", name_tag + "endpoint"));
+					CreateTagsRequest createTagsRequest6 = new CreateTagsRequest();
+					createTagsRequest6.setTags(tag6);
+					createTagsRequest6.withResources(vpceid);
+					InitialWindow.ec2Client.createTags(createTagsRequest6);
 
 					boolean done = false;
 					DescribeVpcsRequest request = new DescribeVpcsRequest();
@@ -425,7 +458,7 @@ public class VPCConsole {
 		});
 		button_1.setHorizontalTextPosition(SwingConstants.CENTER);
 		button_1.setBounds(446, 167, 118, 39);
-		frame.getContentPane().add(button_1);
+		frmVpcconsole.getContentPane().add(button_1);
 
 		boolean done = false;
 		DescribeVpcsRequest request = new DescribeVpcsRequest();
@@ -463,7 +496,7 @@ public class VPCConsole {
 					for (RouteTable routetable : describeRouteTablesResult.getRouteTables())
 						if (routetable.getVpcId().equals(temp.getVpcId()))
 							rt_id.add(routetable.getRouteTableId());
-					
+
 					DescribeSubnetsResult describeSubnetsResult = InitialWindow.ec2Client.describeSubnets();
 					List<String> sn_id = new ArrayList<String>();
 					for (Subnet subnet : describeSubnetsResult.getSubnets())

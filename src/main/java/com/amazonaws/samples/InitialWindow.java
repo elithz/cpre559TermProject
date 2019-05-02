@@ -24,6 +24,8 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
@@ -36,6 +38,7 @@ public class InitialWindow {
 	public BasicAWSCredentials user_credential = null;
 	public static AmazonS3 s3Client = null;
 	public static AmazonEC2 ec2Client = null;
+	public static AmazonElasticLoadBalancing elbClient = null;
 	public static String OS_NAME = System.getProperty("os.name");
 
 	/**
@@ -120,6 +123,8 @@ public class InitialWindow {
 					s3Client = AmazonS3ClientBuilder.standard().withRegion(choice.getSelectedItem())
 							.withCredentials(new AWSStaticCredentialsProvider(user_credential)).build();
 					ec2Client = AmazonEC2ClientBuilder.standard().withRegion(choice.getSelectedItem())
+							.withCredentials(new AWSStaticCredentialsProvider(user_credential)).build();
+					elbClient = AmazonElasticLoadBalancingClientBuilder.standard().withRegion(choice.getSelectedItem())
 							.withCredentials(new AWSStaticCredentialsProvider(user_credential)).build();
 					try {
 						List<Bucket> buckets = s3Client.listBuckets();

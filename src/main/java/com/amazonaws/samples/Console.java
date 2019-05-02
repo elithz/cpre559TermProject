@@ -10,7 +10,7 @@ import javax.swing.JFrame;
 
 public class Console {
 
-	private JFrame frmConsole;
+	public static JFrame frmConsole;
 	private final Action action = new SwingAction();
 	private final Action action_1 = new SwingAction_1();
 	private final Action action_2 = new SwingAction_2();
@@ -73,6 +73,7 @@ public class Console {
 		public void actionPerformed(ActionEvent e) {
 			EC2Console ec2console = new EC2Console();
 			ec2console.main(null);
+			frmConsole.setEnabled(false);
 		}
 	}
 
@@ -85,6 +86,7 @@ public class Console {
 		public void actionPerformed(ActionEvent e) {
 			S3Console s3console = new S3Console();
 			s3console.main(null);
+			frmConsole.setEnabled(false);
 		}
 	}
 
@@ -97,6 +99,7 @@ public class Console {
 		public void actionPerformed(ActionEvent e) {
 			VPCConsole vpcconsole = new VPCConsole();
 			vpcconsole.main(null);
+			frmConsole.setEnabled(false);
 		}
 	}
 }

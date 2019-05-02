@@ -4,6 +4,8 @@ import java.awt.Choice;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +22,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 
+import com.amazonaws.services.ec2.model.CreateKeyPairRequest;
+import com.amazonaws.services.ec2.model.CreateKeyPairResult;
+import com.amazonaws.services.ec2.model.CreateSecurityGroupRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.DescribeKeyPairsResult;
@@ -41,11 +46,13 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.TagSpecification;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
+import com.amazonaws.services.elasticloadbalancing.model.CreateLoadBalancerRequest;
+import com.amazonaws.services.elasticloadbalancing.model.Listener;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 
 public class EC2Console {
 
-	private JFrame frame;
+	private JFrame frmEcconsole;
 	public DefaultListModel<String> model;
 	public DefaultListModel<String> model_1;
 	public List<Instance> insts = new ArrayList<Instance>();
@@ -58,7 +65,7 @@ public class EC2Console {
 			public void run() {
 				try {
 					EC2Console window = new EC2Console();
-					window.frame.setVisible(true);
+					window.frmEcconsole.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -78,25 +85,33 @@ public class EC2Console {
 	 */
 
 	private void initialize() {
-		frame = new JFrame();
-		frame.setBounds(100, 100, 590, 361);
-		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.getContentPane().setLayout(null);
+		frmEcconsole = new JFrame();
+		frmEcconsole.setTitle("EC2Console");
+		frmEcconsole.setBounds(100, 100, 567, 361);
+		frmEcconsole.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frmEcconsole.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				Console.frmConsole.setEnabled(true);
+			}
+
+		});
+		frmEcconsole.getContentPane().setLayout(null);
 
 		model = new DefaultListModel<>();
 		model_1 = new DefaultListModel<>();
 
 		JLabel lblInstance = new JLabel("Instance(s)");
 		lblInstance.setBounds(10, 27, 82, 15);
-		frame.getContentPane().add(lblInstance);
+		frmEcconsole.getContentPane().add(lblInstance);
 
 		JLabel lblStatus = new JLabel("Status");
 		lblStatus.setBounds(198, 27, 54, 15);
-		frame.getContentPane().add(lblStatus);
+		frmEcconsole.getContentPane().add(lblStatus);
 
 		JList<String> list = new JList<>(model);
 		list.setBounds(10, 52, 156, 260);
-		frame.getContentPane().add(list);
+		frmEcconsole.getContentPane().add(list);
 
 		JButton btnLauch = new JButton("Lauch New");
 		btnLauch.addActionListener(new ActionListener() {
@@ -146,29 +161,30 @@ public class EC2Console {
 					String subnet_1 = "";
 					String sn_id = "";
 					String inst_name = "";
-					
+
 					System.out.println("Creating ec2 instance");
 					JTextField imageId = new JTextField();
 					Choice instanceType = new Choice();
 					for (String itname : it_name)
 						instanceType.add(itname);
-					
+
 					Choice keyPair = new Choice();
 					for (String keypair : kp_name)
 						keyPair.add(keypair);
-					
+
 //					Choice securityGroup = new Choice();
 //					for (String securitygroup : sg_name)
 //						securityGroup.add(securitygroup);
-					
+
 					Choice subNet = new Choice();
 					for (String sub_net : sn_name)
 						subNet.add(sub_net);
-					
+
 					JTextField instName = new JTextField();
-					
-					Object[] message = { "image ID:", imageId, "instance type:", instanceType, "key pair:", keyPair, "subnet:", subNet, "istance name:", instName };
-					
+
+					Object[] message = { "Image ID:", imageId, "Instance Type:", instanceType, "Key Pair:", keyPair,
+							"Subnet:", subNet, "Istance Name:", instName };
+
 //					, "security group:", securityGroup
 
 					int option = JOptionPane.showConfirmDialog(null, message, "Creat Instance",
@@ -180,26 +196,27 @@ public class EC2Console {
 //						security_group = securityGroup.getSelectedItem();
 						subnet_1 = subNet.getSelectedItem();
 						inst_name = instName.getText();
-						
+
 //						for (SecurityGroup security_group_id : rsps_sg.getSecurityGroups())
 //							if (security_group_id.getGroupName().equals(security_group))
 //								sg_id = security_group_id.getGroupId();
-						
+
 						for (Subnet subnet_id : describeSubnetsResult.getSubnets())
 							for (Tag tag : subnet_id.getTags())
 								if (tag.getValue().equals(subnet_1))
 									sn_id = subnet_id.getSubnetId();
-						
+
 					} else {
 						System.out.println("InstanceCreation canceled");
 					}
 					if (image_id != null && instance_type != null && key_pair != null && sn_id != null) {
-						System.out.println(
-								image_id + " " + instance_type + " " + key_pair + " " + sn_id + " " + inst_name + " --debug");
-						
+						System.out.println(image_id + " " + instance_type + " " + key_pair + " " + sn_id + " "
+								+ inst_name + " --debug");
+
 						List<Tag> tags = new ArrayList<Tag>();
 						tags.add(new Tag("Name", inst_name));
-						TagSpecification tagconfig = new TagSpecification().withTags(tags).withResourceType(ResourceType.Instance);
+						TagSpecification tagconfig = new TagSpecification().withTags(tags)
+								.withResourceType(ResourceType.Instance);
 						RunInstancesRequest runInstancesRequest = new RunInstancesRequest().withImageId(image_id)
 								.withInstanceType(instance_type).withMinCount(1).withMaxCount(1).withKeyName(key_pair)
 								.withSubnetId(sn_id).withTagSpecifications(tagconfig);
@@ -232,7 +249,7 @@ public class EC2Console {
 			}
 		});
 		btnLauch.setBounds(446, 49, 93, 23);
-		frame.getContentPane().add(btnLauch);
+		frmEcconsole.getContentPane().add(btnLauch);
 
 		JButton btnTerminate = new JButton("Terminate");
 		btnTerminate.addActionListener(new ActionListener() {
@@ -270,7 +287,7 @@ public class EC2Console {
 			}
 		});
 		btnTerminate.setBounds(446, 82, 93, 23);
-		frame.getContentPane().add(btnTerminate);
+		frmEcconsole.getContentPane().add(btnTerminate);
 
 		JButton btnStop = new JButton("Stop");
 		btnStop.addActionListener(new ActionListener() {
@@ -306,7 +323,7 @@ public class EC2Console {
 			}
 		});
 		btnStop.setBounds(446, 148, 93, 23);
-		frame.getContentPane().add(btnStop);
+		frmEcconsole.getContentPane().add(btnStop);
 
 		JButton btnRun = new JButton("Run");
 		btnRun.addActionListener(new ActionListener() {
@@ -342,7 +359,7 @@ public class EC2Console {
 			}
 		});
 		btnRun.setBounds(446, 115, 93, 23);
-		frame.getContentPane().add(btnRun);
+		frmEcconsole.getContentPane().add(btnRun);
 
 		JButton btnReboot = new JButton("Reboot");
 		btnReboot.addActionListener(new ActionListener() {
@@ -379,7 +396,7 @@ public class EC2Console {
 			}
 		});
 		btnReboot.setBounds(446, 181, 93, 23);
-		frame.getContentPane().add(btnReboot);
+		frmEcconsole.getContentPane().add(btnReboot);
 
 		DefaultTableModel m = new DefaultTableModel();
 		JTable table = new JTable(m);
@@ -393,7 +410,119 @@ public class EC2Console {
 		table.setBounds(30, 40, 200, 300);
 		JScrollPane scrollPane = new JScrollPane(table);
 		scrollPane.setBounds(176, 52, 260, 260);
-		frame.getContentPane().add(scrollPane);
+		frmEcconsole.getContentPane().add(scrollPane);
+
+		JButton btnLaunchWithElb = new JButton("<html>Launch<br /> With ELB</html>");
+		btnLaunchWithElb.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+
+				DescribeSubnetsResult describeSubnetsResult = InitialWindow.ec2Client.describeSubnets();
+				List<String> sn_name = new ArrayList<String>();
+				for (Subnet subnet : describeSubnetsResult.getSubnets())
+					for (Tag tag : subnet.getTags())
+						if (tag.getKey().equals("Name"))
+							sn_name.add(tag.getValue());
+
+				try {
+					DescribeRegionsResult drr = InitialWindow.ec2Client.describeRegions();
+					for (Region r : drr.getRegions())
+						System.out.println(r.getRegionName());
+					String key_pair = null;
+					String subnet_1 = "";
+					String sn_id = "";
+					String inst_name = "";
+					int listener_port = 0;
+					int instance_port = 0;
+
+					System.out.println("Creating ec2 instance");
+
+					JTextField instName = new JTextField();
+					Choice subNet = new Choice();
+					for (String sub_net : sn_name)
+						subNet.add(sub_net);
+					JTextField listenerPort = new JTextField();
+					JTextField instancePort = new JTextField();
+
+					Object[] message = { "Subnet:", subNet, "Istance Name:", instName, "ELB Port:", listenerPort,
+							"Instance Port:", instancePort };
+
+					int option = JOptionPane.showConfirmDialog(null, message, "Creat Instance",
+							JOptionPane.OK_CANCEL_OPTION);
+					if (option == JOptionPane.OK_OPTION) {
+						subnet_1 = subNet.getSelectedItem();
+						inst_name = instName.getText();
+						listener_port = Integer.parseInt(listenerPort.getText());
+						instance_port = Integer.parseInt(instancePort.getText());
+
+						for (Subnet subnet_id : describeSubnetsResult.getSubnets())
+							for (Tag tag : subnet_id.getTags())
+								if (tag.getValue().equals(subnet_1))
+									sn_id = subnet_id.getSubnetId();
+
+					} else {
+						System.out.println("InstanceCreation canceled");
+					}
+					CreateKeyPairRequest createKeyPairRequest = new CreateKeyPairRequest()
+							.withKeyName(inst_name + "keypair");
+					CreateKeyPairResult createKeyPairResult = InitialWindow.ec2Client
+							.createKeyPair(createKeyPairRequest);
+					key_pair = createKeyPairResult.getKeyPair().getKeyName();
+					if (key_pair != null && sn_id != null && listener_port != 0 && instance_port != 0) {
+						System.out.println(key_pair + " " + sn_id + " " + inst_name + " --debug");
+
+						List<Tag> tags = new ArrayList<Tag>();
+						tags.add(new Tag("Name", inst_name));
+						TagSpecification tagconfig = new TagSpecification().withTags(tags)
+								.withResourceType(ResourceType.Instance);
+						RunInstancesRequest runInstancesRequest = new RunInstancesRequest()
+								.withImageId("ami-02bcbb802e03574ba").withInstanceType("t2.micro").withMinCount(1)
+								.withMaxCount(1).withKeyName(key_pair).withSubnetId(sn_id)
+								.withTagSpecifications(tagconfig);
+
+						InitialWindow.ec2Client.runInstances(runInstancesRequest);
+
+						String vpcID = "";
+						for (Subnet subnet : describeSubnetsResult.getSubnets())
+							vpcID = subnet.getVpcId();
+
+						CreateSecurityGroupRequest createSecurityGroupRequest = new CreateSecurityGroupRequest()
+								.withGroupName(subnet_1 + "secugrp").withVpcId(vpcID);
+						String sgid = InitialWindow.ec2Client.createSecurityGroup(createSecurityGroupRequest)
+								.getGroupId();
+						CreateLoadBalancerRequest createLoadBalancerRequest = new CreateLoadBalancerRequest()
+								.withLoadBalancerName(inst_name + "elb").withSubnets(sn_id).withSecurityGroups(sgid)
+								.withListeners(
+										new Listener().withInstancePort(instance_port).withInstanceProtocol("TCP")
+												.withProtocol("TCP").withLoadBalancerPort(listener_port));
+						InitialWindow.elbClient.createLoadBalancer(createLoadBalancerRequest);
+
+					}
+				} catch (AmazonS3Exception e1) {
+					JOptionPane.showMessageDialog(null, "e1.getErrorMessage()");
+					System.err.println(e1.getErrorMessage());
+				}
+
+				boolean done = false;
+				DescribeInstancesRequest request = new DescribeInstancesRequest();
+				insts.clear();
+				while (!done) {
+					DescribeInstancesResult response = InitialWindow.ec2Client.describeInstances(request);
+					for (Reservation reservation : response.getReservations())
+						for (Instance instance : reservation.getInstances())
+							insts.add(instance);
+
+					request.setNextToken(response.getNextToken());
+					if (response.getNextToken() == null)
+						done = true;
+				}
+				model.clear();
+				for (int i = 0; i < insts.size(); i++)
+					model.addElement(insts.get(i).getInstanceId());
+				list.setSelectedIndex(0);
+			}
+		});
+		btnLaunchWithElb.setBounds(446, 214, 93, 49);
+		frmEcconsole.getContentPane().add(btnLaunchWithElb);
 
 		boolean done = false;
 		DescribeInstancesRequest request = new DescribeInstancesRequest();
@@ -442,7 +571,7 @@ public class EC2Console {
 						if (tag.getKey().equals("Name"))
 							instNam = tag.getValue();
 					m.addRow(new Object[] { "Name", instNam });
-					m.addRow(new Object[] { "AIM", temp.getImageId() });
+					m.addRow(new Object[] { "AMI", temp.getImageId() });
 					m.addRow(new Object[] { "Type", temp.getInstanceType() });
 					m.addRow(new Object[] { "State", temp.getState().getName() });
 					m.addRow(new Object[] { "Monit State", temp.getMonitoring().getState() });

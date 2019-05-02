@@ -3,6 +3,8 @@ package com.amazonaws.samples;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -36,7 +38,7 @@ import com.amazonaws.services.s3.model.VersionListing;
 
 public class S3Console {
 
-	private JFrame frame;
+	private JFrame frmSconsole;
 	public DefaultListModel<String> model;
 	public DefaultListModel<String> model_1;
 
@@ -48,7 +50,7 @@ public class S3Console {
 			public void run() {
 				try {
 					S3Console window = new S3Console();
-					window.frame.setVisible(true);
+					window.frmSconsole.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -67,29 +69,37 @@ public class S3Console {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-		frame = new JFrame();
-		frame.setBounds(100, 100, 450, 300);
-		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.getContentPane().setLayout(null);
+		frmSconsole = new JFrame();
+		frmSconsole.setTitle("S3Console");
+		frmSconsole.setBounds(100, 100, 450, 300);
+		frmSconsole.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frmSconsole.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				Console.frmConsole.setEnabled(true);
+			}
+
+		});
+		frmSconsole.getContentPane().setLayout(null);
 
 		model = new DefaultListModel<>();
 		model_1 = new DefaultListModel<>();
 
 		JLabel lblBuckets = new JLabel("Buckets");
 		lblBuckets.setBounds(10, 27, 54, 15);
-		frame.getContentPane().add(lblBuckets);
+		frmSconsole.getContentPane().add(lblBuckets);
 
 		JLabel lblItems = new JLabel("Item(s)");
 		lblItems.setBounds(198, 27, 54, 15);
-		frame.getContentPane().add(lblItems);
+		frmSconsole.getContentPane().add(lblItems);
 
 		JList<String> list_1 = new JList<>(model_1);
 		list_1.setBounds(198, 52, 120, 199);
-		frame.getContentPane().add(list_1);
+		frmSconsole.getContentPane().add(list_1);
 
 		JList<String> list = new JList<>(model);
 		list.setBounds(10, 52, 178, 166);
-		frame.getContentPane().add(list);
+		frmSconsole.getContentPane().add(list);
 		List<Bucket> buckets = InitialWindow.s3Client.listBuckets();
 		model.clear();
 		for (int i = 0; i < buckets.size(); i++) {
@@ -129,7 +139,7 @@ public class S3Console {
 			}
 		});
 		btnNewButton.setBounds(10, 228, 82, 23);
-		frame.getContentPane().add(btnNewButton);
+		frmSconsole.getContentPane().add(btnNewButton);
 
 		JButton btnDelete = new JButton("Delete");
 		btnDelete.addActionListener(new ActionListener() {
@@ -189,7 +199,7 @@ public class S3Console {
 			}
 		});
 		btnDelete.setBounds(102, 228, 82, 23);
-		frame.getContentPane().add(btnDelete);
+		frmSconsole.getContentPane().add(btnDelete);
 
 		JButton btnUpload = new JButton("Upload");
 		btnUpload.addActionListener(new ActionListener() {
@@ -228,7 +238,7 @@ public class S3Console {
 			}
 		});
 		btnUpload.setBounds(328, 49, 93, 23);
-		frame.getContentPane().add(btnUpload);
+		frmSconsole.getContentPane().add(btnUpload);
 
 		JButton button = new JButton("Download");
 		button.addActionListener(new ActionListener() {
@@ -278,7 +288,7 @@ public class S3Console {
 			}
 		});
 		button.setBounds(328, 97, 93, 23);
-		frame.getContentPane().add(button);
+		frmSconsole.getContentPane().add(button);
 
 		JButton btnDelete_1 = new JButton("Delete");
 		btnDelete_1.addActionListener(new ActionListener() {
@@ -305,7 +315,7 @@ public class S3Console {
 			}
 		});
 		btnDelete_1.setBounds(328, 141, 93, 23);
-		frame.getContentPane().add(btnDelete_1);
+		frmSconsole.getContentPane().add(btnDelete_1);
 
 	}
 
