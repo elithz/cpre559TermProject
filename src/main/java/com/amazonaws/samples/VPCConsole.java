@@ -300,7 +300,7 @@ public class VPCConsole {
 				}
 			}
 		});
-		button.setBounds(446, 118, 118, 39);
+		button.setBounds(446, 118, 118, 61);
 		frmVpcconsole.getContentPane().add(button);
 
 		JButton button_1 = new JButton("<html>Typical VPC<br />with subnets</html>");
@@ -457,7 +457,7 @@ public class VPCConsole {
 			}
 		});
 		button_1.setHorizontalTextPosition(SwingConstants.CENTER);
-		button_1.setBounds(446, 167, 118, 39);
+		button_1.setBounds(446, 189, 118, 61);
 		frmVpcconsole.getContentPane().add(button_1);
 
 		boolean done = false;
