@@ -486,7 +486,7 @@ public class EC2Console {
 							vpcID = subnet.getVpcId();
 
 						CreateSecurityGroupRequest createSecurityGroupRequest = new CreateSecurityGroupRequest()
-								.withGroupName(subnet_1 + "secugrp").withVpcId(vpcID);
+								.withGroupName(subnet_1 + "secugrp").withVpcId(vpcID).withDescription(inst_name + "sg" + vpcID);
 						String sgid = InitialWindow.ec2Client.createSecurityGroup(createSecurityGroupRequest)
 								.getGroupId();
 						CreateLoadBalancerRequest createLoadBalancerRequest = new CreateLoadBalancerRequest()
