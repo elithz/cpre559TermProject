@@ -87,7 +87,7 @@ public class EC2Console {
 	private void initialize() {
 		frmEcconsole = new JFrame();
 		frmEcconsole.setTitle("EC2Console");
-		frmEcconsole.setBounds(100, 100, 567, 361);
+		frmEcconsole.setBounds(100, 100, 589, 361);
 		frmEcconsole.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frmEcconsole.addWindowListener(new WindowAdapter() {
 			@Override
@@ -248,7 +248,7 @@ public class EC2Console {
 				list.setSelectedIndex(0);
 			}
 		});
-		btnLauch.setBounds(446, 49, 93, 23);
+		btnLauch.setBounds(446, 49, 117, 23);
 		frmEcconsole.getContentPane().add(btnLauch);
 
 		JButton btnTerminate = new JButton("Terminate");
@@ -286,7 +286,7 @@ public class EC2Console {
 				list.setSelectedIndex(0);
 			}
 		});
-		btnTerminate.setBounds(446, 82, 93, 23);
+		btnTerminate.setBounds(446, 82, 117, 23);
 		frmEcconsole.getContentPane().add(btnTerminate);
 
 		JButton btnStop = new JButton("Stop");
@@ -322,7 +322,7 @@ public class EC2Console {
 				list.setSelectedIndex(0);
 			}
 		});
-		btnStop.setBounds(446, 148, 93, 23);
+		btnStop.setBounds(446, 148, 117, 23);
 		frmEcconsole.getContentPane().add(btnStop);
 
 		JButton btnRun = new JButton("Run");
@@ -358,7 +358,7 @@ public class EC2Console {
 				list.setSelectedIndex(0);
 			}
 		});
-		btnRun.setBounds(446, 115, 93, 23);
+		btnRun.setBounds(446, 115, 117, 23);
 		frmEcconsole.getContentPane().add(btnRun);
 
 		JButton btnReboot = new JButton("Reboot");
@@ -395,7 +395,7 @@ public class EC2Console {
 				list.setSelectedIndex(0);
 			}
 		});
-		btnReboot.setBounds(446, 181, 93, 23);
+		btnReboot.setBounds(446, 181, 117, 23);
 		frmEcconsole.getContentPane().add(btnReboot);
 
 		DefaultTableModel m = new DefaultTableModel();
@@ -521,7 +521,7 @@ public class EC2Console {
 				list.setSelectedIndex(0);
 			}
 		});
-		btnLaunchWithElb.setBounds(446, 214, 93, 49);
+		btnLaunchWithElb.setBounds(446, 214, 117, 58);
 		frmEcconsole.getContentPane().add(btnLaunchWithElb);
 
 		boolean done = false;
