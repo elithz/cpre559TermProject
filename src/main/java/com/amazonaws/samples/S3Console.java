@@ -71,7 +71,7 @@ public class S3Console {
 	private void initialize() {
 		frmSconsole = new JFrame();
 		frmSconsole.setTitle("S3Console");
-		frmSconsole.setBounds(100, 100, 450, 300);
+		frmSconsole.setBounds(100, 100, 550, 300);
 		frmSconsole.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frmSconsole.addWindowListener(new WindowAdapter() {
 			@Override
@@ -90,15 +90,15 @@ public class S3Console {
 		frmSconsole.getContentPane().add(lblBuckets);
 
 		JLabel lblItems = new JLabel("Item(s)");
-		lblItems.setBounds(198, 27, 54, 15);
+		lblItems.setBounds(252, 27, 54, 15);
 		frmSconsole.getContentPane().add(lblItems);
 
 		JList<String> list_1 = new JList<>(model_1);
-		list_1.setBounds(198, 52, 120, 199);
+		list_1.setBounds(252, 52, 169, 199);
 		frmSconsole.getContentPane().add(list_1);
 
 		JList<String> list = new JList<>(model);
-		list.setBounds(10, 52, 178, 166);
+		list.setBounds(10, 52, 232, 166);
 		frmSconsole.getContentPane().add(list);
 		List<Bucket> buckets = InitialWindow.s3Client.listBuckets();
 		model.clear();
@@ -122,7 +122,7 @@ public class S3Console {
 			}
 		});
 
-		JButton btnNewButton = new JButton("Add");
+		JButton btnNewButton = new JButton("Add Bucket");
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String name = JOptionPane.showInputDialog("What's the name of the new bucket?");
@@ -138,10 +138,10 @@ public class S3Console {
 				list.setSelectedIndex(0);
 			}
 		});
-		btnNewButton.setBounds(10, 228, 82, 23);
+		btnNewButton.setBounds(10, 228, 111, 23);
 		frmSconsole.getContentPane().add(btnNewButton);
 
-		JButton btnDelete = new JButton("Delete");
+		JButton btnDelete = new JButton("Delete Bucket");
 		btnDelete.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String name_to_remove = list.getSelectedValue();
@@ -198,7 +198,7 @@ public class S3Console {
 					model.addElement(buckets.get(i).getName());
 			}
 		});
-		btnDelete.setBounds(102, 228, 82, 23);
+		btnDelete.setBounds(131, 228, 111, 23);
 		frmSconsole.getContentPane().add(btnDelete);
 
 		JButton btnUpload = new JButton("Upload");
@@ -237,7 +237,7 @@ public class S3Console {
 					System.out.println("user canceled upload");
 			}
 		});
-		btnUpload.setBounds(328, 49, 93, 23);
+		btnUpload.setBounds(431, 49, 93, 23);
 		frmSconsole.getContentPane().add(btnUpload);
 
 		JButton button = new JButton("Download");
@@ -287,7 +287,7 @@ public class S3Console {
 
 			}
 		});
-		button.setBounds(328, 97, 93, 23);
+		button.setBounds(431, 96, 93, 23);
 		frmSconsole.getContentPane().add(button);
 
 		JButton btnDelete_1 = new JButton("Delete");
@@ -314,7 +314,7 @@ public class S3Console {
 
 			}
 		});
-		btnDelete_1.setBounds(328, 141, 93, 23);
+		btnDelete_1.setBounds(431, 140, 93, 23);
 		frmSconsole.getContentPane().add(btnDelete_1);
 
 	}

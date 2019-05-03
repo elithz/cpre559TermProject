@@ -7,6 +7,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import java.awt.event.ActionListener;
 
 public class Console {
 
@@ -49,18 +50,22 @@ public class Console {
 		frmConsole.getContentPane().setLayout(null);
 
 		JButton btnNewButton = new JButton("EC2");
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			}
+		});
 		btnNewButton.setAction(action);
-		btnNewButton.setBounds(153, 45, 93, 23);
+		btnNewButton.setBounds(160, 27, 93, 48);
 		frmConsole.getContentPane().add(btnNewButton);
 
 		JButton btnNewButton_1 = new JButton("S3");
 		btnNewButton_1.setAction(action_1);
-		btnNewButton_1.setBounds(153, 107, 93, 23);
+		btnNewButton_1.setBounds(160, 96, 93, 48);
 		frmConsole.getContentPane().add(btnNewButton_1);
 
 		JButton btnNewButton_2 = new JButton("VPC");
 		btnNewButton_2.setAction(action_2);
-		btnNewButton_2.setBounds(153, 172, 93, 23);
+		btnNewButton_2.setBounds(160, 165, 93, 48);
 		frmConsole.getContentPane().add(btnNewButton_2);
 	}
 

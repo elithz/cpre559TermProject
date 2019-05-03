@@ -87,7 +87,7 @@ public class InitialWindow {
 
 		frmHi = new JFrame();
 		frmHi.setTitle("AWS Simple GUI Tool");
-		frmHi.setBounds(100, 100, 553, 361);
+		frmHi.setBounds(100, 100, 445, 262);
 		frmHi.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		JPanel panel = new JPanel();
@@ -107,7 +107,7 @@ public class InitialWindow {
 		textField_1.setComponentPopupMenu(menu);
 
 		Choice choice = new Choice();
-		choice.setBounds(182, 124, 113, 21);
+		choice.setBounds(182, 109, 113, 21);
 		choice.addItem("us-east-1");
 		choice.addItem("us-east-2");
 		choice.addItem("us-west-1");
@@ -146,7 +146,7 @@ public class InitialWindow {
 				}
 			}
 		});
-		btnNewButton.setBounds(182, 164, 93, 23);
+		btnNewButton.setBounds(182, 136, 93, 23);
 		panel.add(btnNewButton);
 
 		JLabel lblWelcomeToAws = new JLabel("Welcome to AWS Simple GUI Tool");
@@ -164,11 +164,11 @@ public class InitialWindow {
 		panel.add(lblIamSecretAccess);
 
 		JLabel lblRegion = new JLabel("Region");
-		lblRegion.setBounds(54, 124, 54, 15);
+		lblRegion.setBounds(20, 109, 54, 15);
 		panel.add(lblRegion);
 
 		JLabel lblNewLabel = new JLabel("Presented By: NERVE Software");
-		lblNewLabel.setBounds(314, 297, 213, 15);
+		lblNewLabel.setBounds(245, 198, 174, 15);
 		panel.add(lblNewLabel);
 
 	}
