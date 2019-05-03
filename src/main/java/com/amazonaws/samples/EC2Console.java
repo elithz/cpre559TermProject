@@ -6,11 +6,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -20,8 +26,10 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.ec2.model.CreateKeyPairRequest;
 import com.amazonaws.services.ec2.model.CreateKeyPairResult;
 import com.amazonaws.services.ec2.model.CreateSecurityGroupRequest;
@@ -33,12 +41,15 @@ import com.amazonaws.services.ec2.model.DescribeSubnetsResult;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceStateChange;
 import com.amazonaws.services.ec2.model.InstanceType;
+import com.amazonaws.services.ec2.model.KeyPair;
 import com.amazonaws.services.ec2.model.KeyPairInfo;
+import com.amazonaws.services.ec2.model.ModifyInstanceAttributeRequest;
 import com.amazonaws.services.ec2.model.RebootInstancesRequest;
 import com.amazonaws.services.ec2.model.Region;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.ResourceType;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
+import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.StartInstancesRequest;
 import com.amazonaws.services.ec2.model.StopInstancesRequest;
 import com.amazonaws.services.ec2.model.Subnet;
@@ -48,7 +59,11 @@ import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.amazonaws.services.elasticloadbalancing.model.CreateLoadBalancerRequest;
 import com.amazonaws.services.elasticloadbalancing.model.Listener;
+import com.amazonaws.services.elasticloadbalancing.model.ModifyLoadBalancerAttributesRequest;
+import com.amazonaws.services.elasticloadbalancing.model.RegisterInstancesWithLoadBalancerRequest;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 
 public class EC2Console {
 
@@ -183,7 +198,7 @@ public class EC2Console {
 					JTextField instName = new JTextField();
 
 					Object[] message = { "Image ID:", imageId, "Instance Type:", instanceType, "Key Pair:", keyPair,
-							"Subnet:", subNet, "Istance Name:", instName };
+							"Subnet:", subNet, "Instance Name:", instName };
 
 //					, "security group:", securityGroup
 
@@ -443,7 +458,7 @@ public class EC2Console {
 					JTextField listenerPort = new JTextField();
 					JTextField instancePort = new JTextField();
 
-					Object[] message = { "Subnet:", subNet, "Istance Name:", instName, "ELB Port:", listenerPort,
+					Object[] message = { "Subnet:", subNet, "Instance Name:", instName, "ELB Port:", listenerPort,
 							"Instance Port:", instancePort };
 
 					int option = JOptionPane.showConfirmDialog(null, message, "Creat Instance",
@@ -467,34 +482,77 @@ public class EC2Console {
 					CreateKeyPairResult createKeyPairResult = InitialWindow.ec2Client
 							.createKeyPair(createKeyPairRequest);
 					key_pair = createKeyPairResult.getKeyPair().getKeyName();
+					String privatekey = createKeyPairResult.getKeyPair().getKeyMaterial();
+					System.out.println("Storing key pair to local derictory");
+					JFileChooser chooser = new JFileChooser();
+					chooser.setCurrentDirectory(new java.io.File("."));
+					chooser.setDialogTitle("Choose the directory you want to save the file");
+					chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+					chooser.setAcceptAllFileFilterUsed(false);
+					FileNameExtensionFilter filter = new FileNameExtensionFilter("PEM", "pem");
+					chooser.setFileFilter(filter);
+					if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+						String save_path = chooser.getSelectedFile().getAbsolutePath();
+						try {
+							FileOutputStream fos = new FileOutputStream(
+									new File(save_path + File.separator + key_pair + ".pem"));
+							fos.write(privatekey.getBytes(), 0, privatekey.length());
+							System.out.println("Download finished");
+							fos.close();
+						} catch (AmazonServiceException e1) {
+							System.err.println(e1.getErrorMessage());
+							System.exit(1);
+						} catch (FileNotFoundException e1) {
+							System.err.println(e1.getMessage());
+							System.exit(1);
+						} catch (IOException e1) {
+							System.err.println(e1.getMessage());
+							System.exit(1);
+						}
+					} else
+						System.out.println("user canceled download");
 					if (key_pair != null && sn_id != null && listener_port != 0 && instance_port != 0) {
 						System.out.println(key_pair + " " + sn_id + " " + inst_name + " --debug");
 
+						String vpcID = "";
+						for (Subnet subnet : describeSubnetsResult.getSubnets())
+							for (Tag tag : subnet.getTags())
+								if (tag.getValue().equals(subnet_1))
+									vpcID = subnet.getVpcId();
+
+						CreateSecurityGroupRequest createSecurityGroupRequest = new CreateSecurityGroupRequest()
+								.withGroupName(subnet_1 + "secugrp").withVpcId(vpcID)
+								.withDescription(inst_name + "sg" + vpcID);
+						String sgid = InitialWindow.ec2Client.createSecurityGroup(createSecurityGroupRequest)
+								.getGroupId();
+						
 						List<Tag> tags = new ArrayList<Tag>();
 						tags.add(new Tag("Name", inst_name));
 						TagSpecification tagconfig = new TagSpecification().withTags(tags)
 								.withResourceType(ResourceType.Instance);
 						RunInstancesRequest runInstancesRequest = new RunInstancesRequest()
 								.withImageId("ami-02bcbb802e03574ba").withInstanceType("t2.micro").withMinCount(1)
-								.withMaxCount(1).withKeyName(key_pair).withSubnetId(sn_id)
+								.withMaxCount(1).withKeyName(key_pair).withSecurityGroupIds(sgid)
 								.withTagSpecifications(tagconfig);
 
-						InitialWindow.ec2Client.runInstances(runInstancesRequest);
+						RunInstancesResult runInstancesResult = InitialWindow.ec2Client
+								.runInstances(runInstancesRequest);
+						com.amazonaws.services.elasticloadbalancing.model.Instance tempinstance = new com.amazonaws.services.elasticloadbalancing.model.Instance();
+						tempinstance.setInstanceId(
+								runInstancesResult.getReservation().getInstances().get(0).getInstanceId());
 
-						String vpcID = "";
-						for (Subnet subnet : describeSubnetsResult.getSubnets())
-							vpcID = subnet.getVpcId();
-
-						CreateSecurityGroupRequest createSecurityGroupRequest = new CreateSecurityGroupRequest()
-								.withGroupName(subnet_1 + "secugrp").withVpcId(vpcID).withDescription(inst_name + "sg" + vpcID);
-						String sgid = InitialWindow.ec2Client.createSecurityGroup(createSecurityGroupRequest)
-								.getGroupId();
+						
 						CreateLoadBalancerRequest createLoadBalancerRequest = new CreateLoadBalancerRequest()
 								.withLoadBalancerName(inst_name + "elb").withSubnets(sn_id).withSecurityGroups(sgid)
 								.withListeners(
 										new Listener().withInstancePort(instance_port).withInstanceProtocol("TCP")
 												.withProtocol("TCP").withLoadBalancerPort(listener_port));
 						InitialWindow.elbClient.createLoadBalancer(createLoadBalancerRequest);
+
+						RegisterInstancesWithLoadBalancerRequest registerInstancesWithLoadBalancerRequest = new RegisterInstancesWithLoadBalancerRequest()
+								.withLoadBalancerName(inst_name + "elb").withInstances(tempinstance);
+						InitialWindow.elbClient
+								.registerInstancesWithLoadBalancer(registerInstancesWithLoadBalancerRequest);
 
 					}
 				} catch (AmazonS3Exception e1) {

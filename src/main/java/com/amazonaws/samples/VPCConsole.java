@@ -387,7 +387,7 @@ public class VPCConsole {
 					CreateSubnetResult createSubnetResult1 = InitialWindow.ec2Client.createSubnet(createSubnetRequest1);
 					String subnetid_public = createSubnetResult1.getSubnet().getSubnetId();
 					List<Tag> tag4 = new ArrayList<Tag>();
-					tag4.add(new Tag("Name", name_tag + "privaesubnet"));
+					tag4.add(new Tag("Name", name_tag + "publicsubnet"));
 					CreateTagsRequest createTagsRequest4 = new CreateTagsRequest();
 					createTagsRequest4.setTags(tag4);
 					createTagsRequest4.withResources(subnetid_public);
