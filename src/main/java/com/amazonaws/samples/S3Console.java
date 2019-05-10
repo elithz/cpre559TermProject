@@ -36,15 +36,21 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.model.S3VersionSummary;
 import com.amazonaws.services.s3.model.VersionListing;
 
+/***
+ * 
+ * S3Console.java
+ * 
+ * @author elith, daiyuan
+ * @version 2.1 NERVE Software 2019/5/10
+ *
+ */
+
 public class S3Console {
 
 	private JFrame frmSconsole;
 	public DefaultListModel<String> model;
 	public DefaultListModel<String> model_1;
 
-	/**
-	 * Launch the application.
-	 */
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -58,16 +64,10 @@ public class S3Console {
 		});
 	}
 
-	/**
-	 * Create the application.
-	 */
 	public S3Console() {
 		initialize();
 	}
 
-	/**
-	 * Initialize the contents of the frame.
-	 */
 	private void initialize() {
 		frmSconsole = new JFrame();
 		frmSconsole.setTitle("S3Console");
@@ -107,12 +107,15 @@ public class S3Console {
 		}
 		list.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e) {
+				// list the objects of the selected bucket
 				String selected_bucket = list.getSelectedValue();
 				System.out.println(selected_bucket);
 				System.out.println(list.getSelectedIndex());
+				// if the bucket is delete, make the selected bucket to the first of the list
 				if (list.getSelectedIndex() == -1)
 					list.setSelectedIndex(0);
 				else {
+					// refresh the object list of the selected bucket
 					ListObjectsV2Result result = InitialWindow.s3Client.listObjectsV2(selected_bucket);
 					List<S3ObjectSummary> objects = result.getObjectSummaries();
 					model_1.clear();
@@ -125,12 +128,14 @@ public class S3Console {
 		JButton btnNewButton = new JButton("Add Bucket");
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				// add new bucket to s3 with the specified name
 				String name = JOptionPane.showInputDialog("What's the name of the new bucket?");
 				try {
 					InitialWindow.s3Client.createBucket(name);
 				} catch (AmazonS3Exception e1) {
 					System.err.println(e1.getErrorMessage());
 				}
+				// refresh bucket list
 				List<Bucket> buckets = InitialWindow.s3Client.listBuckets();
 				model.clear();
 				for (int i = 0; i < buckets.size(); i++)
@@ -144,9 +149,11 @@ public class S3Console {
 		JButton btnDelete = new JButton("Delete Bucket");
 		btnDelete.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				// delete selected bucket
 				String name_to_remove = list.getSelectedValue();
 				System.out.println(name_to_remove);
 
+				// removing all objects in the bucket
 				try {
 					System.out.println(" - removing objects from bucket");
 					ObjectListing object_listing = InitialWindow.s3Client.listObjects(name_to_remove);
@@ -164,6 +171,7 @@ public class S3Console {
 							break;
 					}
 
+					// removing all versions of the bucket
 					System.out.println(" - removing versions from bucket");
 					VersionListing version_listing = InitialWindow.s3Client
 							.listVersions(new ListVersionsRequest().withBucketName(name_to_remove));
@@ -192,6 +200,7 @@ public class S3Console {
 					System.exit(1);
 				}
 
+				// refresh bucket list
 				List<Bucket> buckets = InitialWindow.s3Client.listBuckets();
 				model.clear();
 				for (int i = 0; i < buckets.size(); i++)
@@ -204,6 +213,7 @@ public class S3Console {
 		JButton btnUpload = new JButton("Upload");
 		btnUpload.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				// upload a local object to the selected bucket
 				String target_bucket = list.getSelectedValue();
 				System.out.println(target_bucket);
 				JFileChooser chooser = new JFileChooser();
@@ -228,6 +238,8 @@ public class S3Console {
 								+ "such as not being able to access the network.");
 						System.out.println("Error Message: " + ace.getMessage());
 					}
+
+					// refresh object list
 					ListObjectsV2Result result = InitialWindow.s3Client.listObjectsV2(target_bucket);
 					List<S3ObjectSummary> objects = result.getObjectSummaries();
 					model_1.clear();
@@ -243,6 +255,8 @@ public class S3Console {
 		JButton button = new JButton("Download");
 		button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				// download the selected object from the target bucket to local
+				// user will need to manually specify the system directory to store the object
 				String target_file = list_1.getSelectedValue();
 				String target_bucket = list.getSelectedValue();
 				String save_path = null;
@@ -293,6 +307,7 @@ public class S3Console {
 		JButton btnDelete_1 = new JButton("Delete");
 		btnDelete_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				// delete the selected object from the target bucket
 				String target_file = list_1.getSelectedValue();
 				String target_bucket = list.getSelectedValue();
 				if (target_file != null) {
@@ -309,7 +324,7 @@ public class S3Console {
 					model_1.clear();
 					for (int i = 0; i < objects.size(); i++)
 						model_1.addElement(objects.get(i).getKey());
-				}else
+				} else
 					System.out.println("no object to delete");
 
 			}

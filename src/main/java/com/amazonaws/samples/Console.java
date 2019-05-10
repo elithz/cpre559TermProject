@@ -7,7 +7,15 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import java.awt.event.ActionListener;
+
+/***
+ * 
+ * Console.java
+ * 
+ * @author elith, daiyuan
+ * @version 2.1 NERVE Software 2019/5/10
+ *
+ */
 
 public class Console {
 
@@ -16,15 +24,11 @@ public class Console {
 	private final Action action_1 = new SwingAction_1();
 	private final Action action_2 = new SwingAction_2();
 
-	/**
-	 * Launch the application.
-	 */
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					Console window = new Console();
-					window.frmConsole.setVisible(true);
+					Console.frmConsole.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -32,16 +36,10 @@ public class Console {
 		});
 	}
 
-	/**
-	 * Create the application.
-	 */
 	public Console() {
 		initialize();
 	}
 
-	/**
-	 * Initialize the contents of the frame.
-	 */
 	private void initialize() {
 		frmConsole = new JFrame();
 		frmConsole.setTitle("Main Console");
@@ -49,11 +47,8 @@ public class Console {
 		frmConsole.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmConsole.getContentPane().setLayout(null);
 
+		// create three function buttons
 		JButton btnNewButton = new JButton("EC2");
-		btnNewButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-			}
-		});
 		btnNewButton.setAction(action);
 		btnNewButton.setBounds(160, 27, 93, 48);
 		frmConsole.getContentPane().add(btnNewButton);
@@ -69,6 +64,7 @@ public class Console {
 		frmConsole.getContentPane().add(btnNewButton_2);
 	}
 
+	// set actions for the three buttons
 	private class SwingAction extends AbstractAction {
 		public SwingAction() {
 			putValue(NAME, "EC2");

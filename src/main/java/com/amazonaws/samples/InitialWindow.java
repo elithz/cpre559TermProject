@@ -30,6 +30,15 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
 
+/***
+ * 
+ * InitialWindow.java
+ * 
+ * @author elith, daiyuan
+ * @version 2.1 NERVE Software 2019/5/10
+ *
+ */
+
 public class InitialWindow {
 
 	private JFrame frmHi;
@@ -41,9 +50,7 @@ public class InitialWindow {
 	public static AmazonElasticLoadBalancing elbClient = null;
 	public static String OS_NAME = System.getProperty("os.name");
 
-	/**
-	 * Launch the application.
-	 */
+	// start the frame of log in
 	public static void main(String[] args) {
 		System.out.println(OS_NAME);
 		EventQueue.invokeLater(new Runnable() {
@@ -58,17 +65,12 @@ public class InitialWindow {
 		});
 	}
 
-	/**
-	 * Create the application.
-	 */
 	public InitialWindow() {
 		initialize();
 	}
 
-	/**
-	 * Initialize the contents of the frame.
-	 */
 	private void initialize() {
+		// add right click options to text fields with copy cut and paste
 		JPopupMenu menu = new JPopupMenu();
 		Action cut = new DefaultEditorKit.CutAction();
 		cut.putValue(Action.NAME, "Cut");
@@ -94,6 +96,7 @@ public class InitialWindow {
 		frmHi.getContentPane().add(panel, BorderLayout.CENTER);
 		panel.setLayout(null);
 
+		// create text field that let user input credential information
 		textField = new JPasswordField();
 		textField.setBounds(182, 82, 154, 21);
 		panel.add(textField);
@@ -114,12 +117,17 @@ public class InitialWindow {
 		choice.addItem("us-west-2");
 		panel.add(choice);
 
+		// button action to send the credential to aws
 		JButton btnNewButton = new JButton("Log in");
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
+				// debug
 				System.out.println(textField_1.getText() + "   " + textField.getText());
+				// generate user basic credential with collected information
 				user_credential = new BasicAWSCredentials(textField_1.getText(), textField.getText());
 				try {
+					// build three clients that will be used in program functions with given
+					// credential
 					s3Client = AmazonS3ClientBuilder.standard().withRegion(choice.getSelectedItem())
 							.withCredentials(new AWSStaticCredentialsProvider(user_credential)).build();
 					ec2Client = AmazonEC2ClientBuilder.standard().withRegion(choice.getSelectedItem())
@@ -127,8 +135,10 @@ public class InitialWindow {
 					elbClient = AmazonElasticLoadBalancingClientBuilder.standard().withRegion(choice.getSelectedItem())
 							.withCredentials(new AWSStaticCredentialsProvider(user_credential)).build();
 					try {
+						// test if the credential is valid
 						List<Bucket> buckets = s3Client.listBuckets();
 						System.out.println(buckets.get(1).getName());
+						// call a new console to show function of program
 						Console console = new Console();
 						console.main(null);
 						frmHi.setVisible(false);
@@ -149,6 +159,7 @@ public class InitialWindow {
 		btnNewButton.setBounds(182, 136, 93, 23);
 		panel.add(btnNewButton);
 
+		// add text labels to indicate explanations
 		JLabel lblWelcomeToAws = new JLabel("Welcome to AWS Simple GUI Tool");
 		lblWelcomeToAws.setFont(new Font("SimSun", Font.PLAIN, 14));
 		lblWelcomeToAws.setHorizontalAlignment(SwingConstants.CENTER);

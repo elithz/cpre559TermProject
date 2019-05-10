@@ -50,6 +50,15 @@ import com.amazonaws.services.ec2.model.Tenancy;
 import com.amazonaws.services.ec2.model.Vpc;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 
+/***
+ * 
+ * VPCConsole.java
+ * 
+ * @author elith, daiyuan
+ * @version 2.1 NERVE Software 2019/5/10
+ *
+ */
+
 public class VPCConsole {
 
 	private JFrame frmVpcconsole;
@@ -57,9 +66,6 @@ public class VPCConsole {
 	public DefaultListModel<String> model_1;
 	public List<Vpc> vpcs = new ArrayList<Vpc>();
 
-	/**
-	 * Launch the application.
-	 */
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -73,16 +79,9 @@ public class VPCConsole {
 		});
 	}
 
-	/**
-	 * Create the application.
-	 */
 	public VPCConsole() {
 		initialize();
 	}
-
-	/**
-	 * Initialize the contents of the frame.
-	 */
 
 	private void initialize() {
 		frmVpcconsole = new JFrame();
@@ -116,12 +115,9 @@ public class VPCConsole {
 		DefaultTableModel m = new DefaultTableModel();
 		JTable table = new JTable(m);
 
-		// Create a couple of columns
 		m.addColumn("Property");
 		m.addColumn("Value");
 
-		// Append a row
-		// m.addRow(new Object[]{"Property", "Value"});
 		table.setBounds(30, 40, 200, 300);
 		JScrollPane scrollPane = new JScrollPane(table);
 		scrollPane.setBounds(176, 52, 260, 260);
@@ -131,6 +127,8 @@ public class VPCConsole {
 		btnAddVpc.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
+					// set a new vpc with user specified name, ipv4 and ipv4 CIDR block and instance
+					// tenancy type
 					String name_tag = null;
 					String IPv4_CIDR_block = null;
 					String IPv6_CIDR_block = null;
@@ -148,8 +146,10 @@ public class VPCConsole {
 					Object[] message = { "Name:", nametag, "IPv4 CIDR block:", ipv4CIDRblock, "IPv6 CIDR block:",
 							ipv6CIDRblock, "Tenancy", tenancychoice };
 
+					// pop up window let user input the required parameters
 					int option = JOptionPane.showConfirmDialog(null, message, "Creat VPC",
 							JOptionPane.OK_CANCEL_OPTION);
+					// when user click ok, then build vpc with buildvpcrequest
 					if (option == JOptionPane.OK_OPTION) {
 						name_tag = nametag.getText();
 						IPv4_CIDR_block = ipv4CIDRblock.getText();
@@ -158,48 +158,50 @@ public class VPCConsole {
 							tenancy = Tenancy.Default;
 						else
 							tenancy = Tenancy.Dedicated;
-					} else {
-						System.out.println("VPC Creation canceled");
-					}
-					if (IPv4_CIDR_block != null && IPv6_CIDR_block != null && tenancy != null) {
-						System.out.println(name_tag + " " + IPv4_CIDR_block + " " + IPv6_CIDR_block + " "
-								+ tenancy.name() + "-- debug");
-						CreateVpcRequest createVpcRequest = new CreateVpcRequest();
-						if (IPv6_CIDR_block.equals("No IPv6 CIDR Block"))
-							createVpcRequest = new CreateVpcRequest().withCidrBlock(IPv4_CIDR_block)
-									.withInstanceTenancy(tenancy).withAmazonProvidedIpv6CidrBlock(false);
-						else
-							createVpcRequest = new CreateVpcRequest().withCidrBlock(IPv4_CIDR_block)
-									.withInstanceTenancy(tenancy).withAmazonProvidedIpv6CidrBlock(true);
 
-						CreateVpcResult createVpcResult = InitialWindow.ec2Client.createVpc(createVpcRequest);
-						List<Tag> tag = new ArrayList<Tag>();
-						tag.add(new Tag("Name", name_tag));
-						Vpc tem = createVpcResult.getVpc();
-						tem.setTags(tag);
-						String createdVpcId = createVpcResult.getVpc().getVpcId();
-						CreateTagsRequest createTagsRequest = new CreateTagsRequest();
-						createTagsRequest.setTags(tag);
-						createTagsRequest.withResources(createdVpcId);
-						InitialWindow.ec2Client.createTags(createTagsRequest);
-						System.out.println("creation done.");
+						if (IPv4_CIDR_block != null && IPv6_CIDR_block != null && tenancy != null) {
+							System.out.println(name_tag + " " + IPv4_CIDR_block + " " + IPv6_CIDR_block + " "
+									+ tenancy.name() + "-- debug");
+							CreateVpcRequest createVpcRequest = new CreateVpcRequest();
+							if (IPv6_CIDR_block.equals("No IPv6 CIDR Block"))
+								createVpcRequest = new CreateVpcRequest().withCidrBlock(IPv4_CIDR_block)
+										.withInstanceTenancy(tenancy).withAmazonProvidedIpv6CidrBlock(false);
+							else
+								createVpcRequest = new CreateVpcRequest().withCidrBlock(IPv4_CIDR_block)
+										.withInstanceTenancy(tenancy).withAmazonProvidedIpv6CidrBlock(true);
 
-						boolean done = false;
-						DescribeVpcsRequest request = new DescribeVpcsRequest();
-						vpcs.clear();
-						while (!done) {
-							DescribeVpcsResult response = InitialWindow.ec2Client.describeVpcs(request);
-							for (Vpc vpc : response.getVpcs())
-								vpcs.add(vpc);
-							request.setNextToken(response.getNextToken());
-							if (response.getNextToken() == null)
-								done = true;
+							CreateVpcResult createVpcResult = InitialWindow.ec2Client.createVpc(createVpcRequest);
+							List<Tag> tag = new ArrayList<Tag>();
+							tag.add(new Tag("Name", name_tag));
+							Vpc tem = createVpcResult.getVpc();
+							tem.setTags(tag);
+							String createdVpcId = createVpcResult.getVpc().getVpcId();
+							CreateTagsRequest createTagsRequest = new CreateTagsRequest();
+							createTagsRequest.setTags(tag);
+							createTagsRequest.withResources(createdVpcId);
+							InitialWindow.ec2Client.createTags(createTagsRequest);
+							System.out.println("creation done.");
+
+							// refresh vpc list
+							boolean done = false;
+							DescribeVpcsRequest request = new DescribeVpcsRequest();
+							vpcs.clear();
+							while (!done) {
+								DescribeVpcsResult response = InitialWindow.ec2Client.describeVpcs(request);
+								for (Vpc vpc : response.getVpcs())
+									vpcs.add(vpc);
+								request.setNextToken(response.getNextToken());
+								if (response.getNextToken() == null)
+									done = true;
+							}
+
+							model.clear();
+							for (int i = 0; i < vpcs.size(); i++)
+								model.addElement(vpcs.get(i).getVpcId());
 						}
+					} else
+						System.out.println("VPC Creation canceled");
 
-						model.clear();
-						for (int i = 0; i < vpcs.size(); i++)
-							model.addElement(vpcs.get(i).getVpcId());
-					}
 				} catch (AmazonS3Exception e1) {
 					JOptionPane.showMessageDialog(null, "e1.getErrorMessage()");
 					System.err.println(e1.getErrorMessage());
@@ -215,6 +217,7 @@ public class VPCConsole {
 				String selected_vpc = list.getSelectedValue();
 				System.out.println(selected_vpc);
 
+				// delete selected vpc
 				DeleteVpcRequest deleteVpcRequest = new DeleteVpcRequest().withVpcId(selected_vpc);
 				DeleteVpcResult deleteVpcResult = InitialWindow.ec2Client.deleteVpc(deleteVpcRequest);
 				System.out.println(deleteVpcResult.toString() + "Delete done");
@@ -239,6 +242,9 @@ public class VPCConsole {
 		btnDeleteVpc.setBounds(446, 85, 118, 23);
 		frmVpcconsole.getContentPane().add(btnDeleteVpc);
 
+		// this button will set up a vpc with user specified name and default value for
+		// the CIDR to create
+		// a typical vpc
 		JButton button = new JButton("<html>Add Typical<br />VPC</html>");
 		button.setHorizontalTextPosition(SwingConstants.CENTER);
 		button.addActionListener(new ActionListener() {
@@ -278,6 +284,7 @@ public class VPCConsole {
 					InitialWindow.ec2Client.createTags(createTagsRequest);
 					System.out.println("creation done.");
 
+					// refresh vpc list
 					boolean done = false;
 					DescribeVpcsRequest request = new DescribeVpcsRequest();
 					vpcs.clear();
@@ -303,6 +310,10 @@ public class VPCConsole {
 		button.setBounds(446, 118, 118, 61);
 		frmVpcconsole.getContentPane().add(button);
 
+		// this button will do the same thing of typical vpc button but with two new
+		// subnets, two new route tables,
+		// a new vpc endpoint with s3 support, a new internet gateway, and routes them
+		// as the relationship of hw4
 		JButton button_1 = new JButton("<html>Typical VPC<br />with subnets</html>");
 		button_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -434,6 +445,7 @@ public class VPCConsole {
 					createTagsRequest6.withResources(vpceid);
 					InitialWindow.ec2Client.createTags(createTagsRequest6);
 
+					// refresh vpc list
 					boolean done = false;
 					DescribeVpcsRequest request = new DescribeVpcsRequest();
 					vpcs.clear();
@@ -477,6 +489,7 @@ public class VPCConsole {
 			model.addElement(vpcs.get(i).getVpcId());
 		list.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e) {
+				// list the properties of the selected vpc
 				String selected_instance = list.getSelectedValue();
 				System.out.println(selected_instance);
 				if (list.getSelectedIndex() == -1)
