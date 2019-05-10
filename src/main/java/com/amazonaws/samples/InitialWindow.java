@@ -87,7 +87,7 @@ public class InitialWindow {
 
 		frmHi = new JFrame();
 		frmHi.setTitle("AWS Simple GUI Tool");
-		frmHi.setBounds(100, 100, 445, 262);
+		frmHi.setBounds(100, 100, 447, 300);
 		frmHi.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		JPanel panel = new JPanel();
@@ -168,7 +168,7 @@ public class InitialWindow {
 		panel.add(lblRegion);
 
 		JLabel lblNewLabel = new JLabel("Presented By: NERVE Software");
-		lblNewLabel.setBounds(245, 198, 174, 15);
+		lblNewLabel.setBounds(220, 236, 201, 15);
 		panel.add(lblNewLabel);
 
 	}

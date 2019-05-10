@@ -38,6 +38,8 @@ import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.DescribeKeyPairsResult;
 import com.amazonaws.services.ec2.model.DescribeRegionsResult;
 import com.amazonaws.services.ec2.model.DescribeSubnetsResult;
+import com.amazonaws.services.ec2.model.DescribeVpcsRequest;
+import com.amazonaws.services.ec2.model.DescribeVpcsResult;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceStateChange;
 import com.amazonaws.services.ec2.model.InstanceType;
@@ -57,6 +59,7 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.TagSpecification;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
+import com.amazonaws.services.ec2.model.Vpc;
 import com.amazonaws.services.elasticloadbalancing.model.CreateLoadBalancerRequest;
 import com.amazonaws.services.elasticloadbalancing.model.Listener;
 import com.amazonaws.services.elasticloadbalancing.model.ModifyLoadBalancerAttributesRequest;
@@ -473,88 +476,88 @@ public class EC2Console {
 							for (Tag tag : subnet_id.getTags())
 								if (tag.getValue().equals(subnet_1))
 									sn_id = subnet_id.getSubnetId();
+						System.out.println("selected sn id: " + sn_id);
+						CreateKeyPairRequest createKeyPairRequest = new CreateKeyPairRequest()
+								.withKeyName(inst_name + "keypair");
+						CreateKeyPairResult createKeyPairResult = InitialWindow.ec2Client
+								.createKeyPair(createKeyPairRequest);
+						key_pair = createKeyPairResult.getKeyPair().getKeyName();
+						String privatekey = createKeyPairResult.getKeyPair().getKeyMaterial();
+						System.out.println("Storing key pair to local derictory");
+						JFileChooser chooser = new JFileChooser();
+						chooser.setCurrentDirectory(new java.io.File("."));
+						chooser.setDialogTitle("Choose the directory you want to save the file");
+						chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+						chooser.setAcceptAllFileFilterUsed(false);
+						FileNameExtensionFilter filter = new FileNameExtensionFilter("PEM", "pem");
+						chooser.setFileFilter(filter);
+						if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+							String save_path = chooser.getSelectedFile().getAbsolutePath();
+							try {
+								FileOutputStream fos = new FileOutputStream(
+										new File(save_path + File.separator + key_pair + ".pem"));
+								fos.write(privatekey.getBytes(), 0, privatekey.length());
+								System.out.println("Download finished");
+								fos.close();
+							} catch (AmazonServiceException e1) {
+								System.err.println(e1.getErrorMessage());
+								System.exit(1);
+							} catch (FileNotFoundException e1) {
+								System.err.println(e1.getMessage());
+								System.exit(1);
+							} catch (IOException e1) {
+								System.err.println(e1.getMessage());
+								System.exit(1);
+							}
+						} else
+							System.out.println("user canceled download");
+						if (key_pair != null && sn_id != null && listener_port != 0 && instance_port != 0) {
+							System.out.println(key_pair + " " + sn_id + " " + inst_name + " --debug");
 
-					} else {
-						System.out.println("InstanceCreation canceled");
-					}
-					CreateKeyPairRequest createKeyPairRequest = new CreateKeyPairRequest()
-							.withKeyName(inst_name + "keypair");
-					CreateKeyPairResult createKeyPairResult = InitialWindow.ec2Client
-							.createKeyPair(createKeyPairRequest);
-					key_pair = createKeyPairResult.getKeyPair().getKeyName();
-					String privatekey = createKeyPairResult.getKeyPair().getKeyMaterial();
-					System.out.println("Storing key pair to local derictory");
-					JFileChooser chooser = new JFileChooser();
-					chooser.setCurrentDirectory(new java.io.File("."));
-					chooser.setDialogTitle("Choose the directory you want to save the file");
-					chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-					chooser.setAcceptAllFileFilterUsed(false);
-					FileNameExtensionFilter filter = new FileNameExtensionFilter("PEM", "pem");
-					chooser.setFileFilter(filter);
-					if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-						String save_path = chooser.getSelectedFile().getAbsolutePath();
-						try {
-							FileOutputStream fos = new FileOutputStream(
-									new File(save_path + File.separator + key_pair + ".pem"));
-							fos.write(privatekey.getBytes(), 0, privatekey.length());
-							System.out.println("Download finished");
-							fos.close();
-						} catch (AmazonServiceException e1) {
-							System.err.println(e1.getErrorMessage());
-							System.exit(1);
-						} catch (FileNotFoundException e1) {
-							System.err.println(e1.getMessage());
-							System.exit(1);
-						} catch (IOException e1) {
-							System.err.println(e1.getMessage());
-							System.exit(1);
+							String vpcID = "";
+							for (Subnet subnet : describeSubnetsResult.getSubnets())
+								for (Tag tag : subnet.getTags())
+									if (tag.getValue().equals(subnet_1))
+										vpcID = subnet.getVpcId();
+
+							CreateSecurityGroupRequest createSecurityGroupRequest = new CreateSecurityGroupRequest()
+									.withGroupName(subnet_1 + "secugrp").withVpcId(vpcID)
+									.withDescription(inst_name + "sg" + vpcID);
+							String sgid = InitialWindow.ec2Client.createSecurityGroup(createSecurityGroupRequest)
+									.getGroupId();
+							
+							List<Tag> tags = new ArrayList<Tag>();
+							tags.add(new Tag("Name", inst_name));
+							TagSpecification tagconfig = new TagSpecification().withTags(tags)
+									.withResourceType(ResourceType.Instance);
+							RunInstancesRequest runInstancesRequest = new RunInstancesRequest()
+									.withImageId("ami-02bcbb802e03574ba").withInstanceType("t2.micro").withMinCount(1)
+									.withMaxCount(1).withKeyName(key_pair).withSecurityGroupIds(sgid).withSubnetId(sn_id)
+									.withTagSpecifications(tagconfig);
+
+							RunInstancesResult runInstancesResult = InitialWindow.ec2Client
+									.runInstances(runInstancesRequest);
+							com.amazonaws.services.elasticloadbalancing.model.Instance tempinstance = new com.amazonaws.services.elasticloadbalancing.model.Instance();
+							tempinstance.setInstanceId(
+									runInstancesResult.getReservation().getInstances().get(0).getInstanceId());
+
+							
+							CreateLoadBalancerRequest createLoadBalancerRequest = new CreateLoadBalancerRequest()
+									.withLoadBalancerName(inst_name + "elb").withSubnets(sn_id).withSecurityGroups(sgid)
+									.withListeners(
+											new Listener().withInstancePort(instance_port).withInstanceProtocol("TCP")
+													.withProtocol("TCP").withLoadBalancerPort(listener_port));
+							InitialWindow.elbClient.createLoadBalancer(createLoadBalancerRequest);
+
+							RegisterInstancesWithLoadBalancerRequest registerInstancesWithLoadBalancerRequest = new RegisterInstancesWithLoadBalancerRequest()
+									.withLoadBalancerName(inst_name + "elb").withInstances(tempinstance);
+							InitialWindow.elbClient
+									.registerInstancesWithLoadBalancer(registerInstancesWithLoadBalancerRequest);
+
 						}
-					} else
-						System.out.println("user canceled download");
-					if (key_pair != null && sn_id != null && listener_port != 0 && instance_port != 0) {
-						System.out.println(key_pair + " " + sn_id + " " + inst_name + " --debug");
-
-						String vpcID = "";
-						for (Subnet subnet : describeSubnetsResult.getSubnets())
-							for (Tag tag : subnet.getTags())
-								if (tag.getValue().equals(subnet_1))
-									vpcID = subnet.getVpcId();
-
-						CreateSecurityGroupRequest createSecurityGroupRequest = new CreateSecurityGroupRequest()
-								.withGroupName(subnet_1 + "secugrp").withVpcId(vpcID)
-								.withDescription(inst_name + "sg" + vpcID);
-						String sgid = InitialWindow.ec2Client.createSecurityGroup(createSecurityGroupRequest)
-								.getGroupId();
-						
-						List<Tag> tags = new ArrayList<Tag>();
-						tags.add(new Tag("Name", inst_name));
-						TagSpecification tagconfig = new TagSpecification().withTags(tags)
-								.withResourceType(ResourceType.Instance);
-						RunInstancesRequest runInstancesRequest = new RunInstancesRequest()
-								.withImageId("ami-02bcbb802e03574ba").withInstanceType("t2.micro").withMinCount(1)
-								.withMaxCount(1).withKeyName(key_pair).withSecurityGroupIds(sgid)
-								.withTagSpecifications(tagconfig);
-
-						RunInstancesResult runInstancesResult = InitialWindow.ec2Client
-								.runInstances(runInstancesRequest);
-						com.amazonaws.services.elasticloadbalancing.model.Instance tempinstance = new com.amazonaws.services.elasticloadbalancing.model.Instance();
-						tempinstance.setInstanceId(
-								runInstancesResult.getReservation().getInstances().get(0).getInstanceId());
-
-						
-						CreateLoadBalancerRequest createLoadBalancerRequest = new CreateLoadBalancerRequest()
-								.withLoadBalancerName(inst_name + "elb").withSubnets(sn_id).withSecurityGroups(sgid)
-								.withListeners(
-										new Listener().withInstancePort(instance_port).withInstanceProtocol("TCP")
-												.withProtocol("TCP").withLoadBalancerPort(listener_port));
-						InitialWindow.elbClient.createLoadBalancer(createLoadBalancerRequest);
-
-						RegisterInstancesWithLoadBalancerRequest registerInstancesWithLoadBalancerRequest = new RegisterInstancesWithLoadBalancerRequest()
-								.withLoadBalancerName(inst_name + "elb").withInstances(tempinstance);
-						InitialWindow.elbClient
-								.registerInstancesWithLoadBalancer(registerInstancesWithLoadBalancerRequest);
-
-					}
+					} else 
+						System.out.println("InstanceCreation canceled");
+					
 				} catch (AmazonS3Exception e1) {
 					JOptionPane.showMessageDialog(null, "e1.getErrorMessage()");
 					System.err.println(e1.getErrorMessage());
@@ -581,6 +584,50 @@ public class EC2Console {
 		});
 		btnLaunchWithElb.setBounds(446, 214, 117, 58);
 		frmEcconsole.getContentPane().add(btnLaunchWithElb);
+		
+		JButton btnNewSg = new JButton("New SG");
+		btnNewSg.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				boolean done = false;
+				DescribeVpcsRequest describeVpcsRequest = new DescribeVpcsRequest();
+				List<Vpc> vpcs = new ArrayList<Vpc>();
+				while (!done) {
+					DescribeVpcsResult describeVpcsResult = InitialWindow.ec2Client.describeVpcs(describeVpcsRequest);
+					for (Vpc vpc : describeVpcsResult.getVpcs())
+						vpcs.add(vpc);
+					describeVpcsRequest.setNextToken(describeVpcsResult.getNextToken());
+					if (describeVpcsResult.getNextToken() == null)
+						done = true;
+				}
+				
+				JTextField sgname = new JTextField();
+				Choice vpcid = new Choice();
+				for (int i = 0; i < vpcs.size(); i++)
+					vpcid.add(vpcs.get(i).getVpcId());
+				JTextField description = new JTextField();
+				Object[] message = { "SG Name:", sgname, "VPC:", vpcid, "Description:", description };
+				String sgName = null;
+				String vpcId = null;
+				String desCription = null;
+				int option = JOptionPane.showConfirmDialog(null, message, "Creat Instance",
+						JOptionPane.OK_CANCEL_OPTION);
+				if (option == JOptionPane.OK_OPTION) {
+					sgName = sgname.getText();
+					vpcId = vpcid.getSelectedItem();
+					desCription = description.getText();
+				} else 
+					System.out.println("InstanceCreation canceled");
+				
+			
+				CreateSecurityGroupRequest createSecurityGroupRequest = new CreateSecurityGroupRequest()
+						.withGroupName(sgName).withVpcId(vpcId)
+						.withDescription(desCription);
+				String sgid = InitialWindow.ec2Client.createSecurityGroup(createSecurityGroupRequest)
+						.getGroupId();
+			}
+		});
+		btnNewSg.setBounds(446, 282, 117, 23);
+		frmEcconsole.getContentPane().add(btnNewSg);
 
 		boolean done = false;
 		DescribeInstancesRequest request = new DescribeInstancesRequest();
@@ -639,5 +686,4 @@ public class EC2Console {
 		});
 
 	}
-
 }
