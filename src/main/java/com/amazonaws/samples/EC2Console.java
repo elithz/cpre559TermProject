@@ -176,6 +176,9 @@ public class EC2Console {
 					String image_id = null;
 					String instance_type = null;
 					String key_pair = null;
+					// following code will be used only when you want to use the withsecuritygroup
+					// method
+					// instead of withsubnet when you try to launch a new instance
 //					String security_group = null;
 //					String sg_id = "";
 					String subnet_1 = "";
